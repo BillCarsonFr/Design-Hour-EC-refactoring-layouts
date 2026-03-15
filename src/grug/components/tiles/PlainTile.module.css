@@ -1,0 +1,13 @@
+div.plainTile {
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    align-items: center; /* vertical center */
+    justify-content: center; /* horizontal center */
+}
+
+p.tileId {
+    font-weight: bold;
+    font-size: x-large;
+    margin: 0; /* remove default p margin so true centering is preserved */
+}
