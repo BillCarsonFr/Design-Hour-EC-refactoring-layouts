@@ -6,14 +6,13 @@ import type {ViewModel} from "./ViewModel.ts";
  * This is useful for testing components in isolation with a mocked view model and allows to use primitive types in stories.
  *
  * @param snapshot
- * @param actions
  */
-export function useMockedViewModel<S, A>(snapshot: S, actions: A): ViewModel<S> & A {
+export function useMockedViewModel<S, A>(snapshot: S): ViewModel<S> {
     return useMemo(() => {
         const vm = new MockViewModel<S>(snapshot);
-        Object.assign(vm, actions);
-        return vm as unknown as ViewModel<S> & A;
-    }, [snapshot, actions]);
+        Object.assign(vm);
+        return vm as unknown as ViewModel<S>;
+    }, [snapshot]);
 }
 
 

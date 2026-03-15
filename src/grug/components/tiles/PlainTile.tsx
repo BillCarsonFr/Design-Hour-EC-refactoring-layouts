@@ -1,10 +1,11 @@
-import {PlainTileViewModel} from "./PlainTileViewModel.ts";
-import {type JSX} from "react";
+import type {ViewModel} from "../../viewmodel/ViewModel.ts";
+import type {PlainTileSnapshot} from "./PlainTileViewModel.ts";
+import {type CSSProperties, type JSX} from "react";
 import styles from "./PlainTile.module.css";
 
 interface PlainTileProps {
-    // Ideally the view only depends on the view model i.e you don't expect any other props here.
-    vm: PlainTileViewModel;
+    // The view consumes the snapshot contract, not a specific implementation class.
+    vm: ViewModel<PlainTileSnapshot>;
 }
 
 
@@ -12,7 +13,7 @@ export function PlainTile({vm}: PlainTileProps): JSX.Element {
 
     const snapshot = vm.getSnapshot();
 
-    const style = {
+    const style: CSSProperties = {
         position: "absolute",
         left: snapshot.layoutData.x,
         top: snapshot.layoutData.y,
