@@ -75,15 +75,21 @@ export class LayoutEngine {
     }
 
     public updateContainerSize(containerWidth: number, containerHeight: number) {
-        // Compute tile size based on container size and layout config
-        const maxTilesPerRow = Math.floor(containerWidth / (this.config.preferredTileWidth + this.config.spacing));
-        const tileWidth = Math.min(this.config.preferredTileWidth, (containerWidth - (maxTilesPerRow - 1) * this.config.spacing) / maxTilesPerRow);
+        // Calculate the ideal (fractional) number of tiles that fit in the container
+        const idealTilesPerRow = (containerWidth + this.config.spacing) / (this.config.preferredTileWidth + this.config.spacing);
+        const fractionalPart = idealTilesPerRow % 1;
+
+        // If fractional part <= 0.5: round down and grow tiles to fill space
+        // If fractional part >  0.5: round up and shrink tiles to fit the extra tile
+        const tilesPerRow = Math.max(1, fractionalPart <= 0.5 ? Math.floor(idealTilesPerRow) : Math.ceil(idealTilesPerRow));
+
+        const tileWidth = (containerWidth - (tilesPerRow - 1) * this.config.spacing) / tilesPerRow;
         const tileHeight = tileWidth / this.config.preferredRatio;
         this.tileSize = [tileWidth, tileHeight];
-        this.colNumber = maxTilesPerRow;
+        this.colNumber = tilesPerRow;
 
         // TODO: compute only if changes?
-        this.computeLayout()
+        this.computeLayout();
     }
 
 
@@ -135,7 +141,7 @@ export class LayoutEngine {
 
         this.contentHeight = y + tileHeight; // Total height of the content, used for scroll container sizing.
 
-        this._listener?.([...this.cachedTileLayoutData.values(), this.contentHeight]);
+        this._listener?.([...this.cachedTileLayoutData.values()], this.contentHeight);
     }
 
 }

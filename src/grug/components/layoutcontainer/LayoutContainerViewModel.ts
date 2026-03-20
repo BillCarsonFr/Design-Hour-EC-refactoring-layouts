@@ -33,9 +33,9 @@ export class LayoutContainerViewModel extends BaseViewModel<LayoutContainerSnaps
         this.layoutEngine = new LayoutEngine();
         this.layoutEngine.setListener(this.layoutListener);
         const tileProvider = this.props.tileProvider;
-        this.props.tileProvider.on("tilesChanged", (tiles: TileMetaData[]) => {
-            this.layoutEngine.updateTileInfo(tiles);
-        })
+        // this.props.tileProvider.on("tilesChanged", (tiles: TileMetaData[]) => {
+        //     this.layoutEngine.updateTileInfo(tiles);
+        // })
         this.layoutEngine.updateTileInfo(tileProvider.getTiles());
     }
 

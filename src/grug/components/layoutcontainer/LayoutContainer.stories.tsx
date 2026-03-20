@@ -2,9 +2,13 @@ import type {JSX} from "react";
 import {useMockedViewModel} from "../../viewmodel/useMockedViewModel.ts";
 import {PlainTile} from "../tiles/PlainTile.tsx";
 import type {Meta, StoryObj} from "@storybook/react-vite";
-import type {LayoutContainerActions, LayoutContainerSnapshot} from "./LayoutContainerViewModel.ts";
+import {
+    LayoutContainerViewModel
+} from "./LayoutContainerViewModel.ts";
 import {LayoutContainer} from "./LayoutContainer.tsx";
 import {PlainTileViewModel} from "../tiles/PlainTileViewModel.ts";
+import type {TileProvider} from "../../model/TileProvider.ts";
+import type {TileMetaData} from "../../layout/LayoutEngine.ts";
 
 
 type LayoutContainerStoryArgs = {
@@ -15,24 +19,23 @@ type LayoutContainerStoryArgs = {
 
 
 function LayoutContainerStoryRender(args: LayoutContainerStoryArgs): JSX.Element {
-    const snapshot: LayoutContainerSnapshot = {
-        childLayoutData: [
-            {uniqueId: "0", x: 0, y: 0, width: args.preferredWidth, height: args.preferredHeight},
-            {uniqueId: "1", x: args.preferredWidth + 16, y: 0, width: args.preferredWidth, height: args.preferredHeight},
-            {uniqueId: "2", x: (args.preferredWidth + 16) * 2, y: 0, width: args.preferredWidth, height: args.preferredHeight},
-            {uniqueId: "3", x: 0, y: args.preferredHeight + 16 , width: args.preferredWidth, height: args.preferredHeight},
-            {uniqueId: "4", x: args.preferredWidth + 16, y: args.preferredHeight + 16, width: args.preferredWidth, height: args.preferredHeight},
-            {uniqueId: "5", x: (args.preferredWidth + 16) * 2, y: args.preferredHeight + 16, width: args.preferredWidth, height: args.preferredHeight},
-        ], contentHeight: (args.preferredHeight + 16) * 2,
-    };
 
-    const actions: LayoutContainerActions = {
-        setContainerSize: (width: number, height: number) => {
+    const mockTileProvider : TileProvider = {
+        getTiles(): TileMetaData[] {
+            return Array.from({length: args.numberOfTiles}, (_, i) => ({
+                stableId: i.toString(),
+                isHero: false,
+                score: 0
+            }));
         },
     }
-    const vm = useMockedViewModel(snapshot, actions);
-    return <LayoutContainer vm={vm} TileComponent={PlainTile} getTileProps={() => {
-        return {vm: new PlainTileViewModel()};
+
+    const vm = new LayoutContainerViewModel({
+        mode: "grid",
+        tileProvider: mockTileProvider,
+    });
+    return <LayoutContainer vm={vm} TileComponent={PlainTile} getTileProps={(layoutData) => {
+        return {vm: new PlainTileViewModel({ tileId: layoutData.uniqueId})};
     }}/>;
 }
 
