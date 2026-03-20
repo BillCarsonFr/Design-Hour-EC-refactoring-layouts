@@ -8,39 +8,28 @@ import {useMockedViewModel} from "../../viewmodel/useMockedViewModel.ts";
 type PlainTileStoryArgs = {
     tileId: string;
     backgroundColor: string;
-    x: number;
-    y: number;
-    width: number;
-    height: number;
 };
 
 function PlainTileStoryRender(args: PlainTileStoryArgs): JSX.Element {
     const snapshot: PlainTileSnapshot = {
         tileId: args.tileId,
         backgroundColor: args.backgroundColor,
-        layoutData: {
-            uniqueId: args.tileId,
-            x: args.x,
-            y: args.y,
-            width: args.width,
-            height: args.height,
-        },
     };
 
-    const vm = useMockedViewModel(snapshot);
+    const vm = useMockedViewModel(snapshot, undefined);
     return <PlainTile vm={vm} />;
 }
 
 const meta = {
     title: 'Grug/Tiles/PlainTile',
-    render: (args) => <PlainTileStoryRender {...args} />,
+    render: (args: PlainTileStoryArgs) => (
+        <div style={{display: "flex", width: "200px", height: "140px"}}>
+            <PlainTileStoryRender {...args} />
+        </div>
+    ),
     argTypes: {
         tileId: {control: 'text'},
         backgroundColor: {control: 'color'},
-        x: {control: {type: 'number'}},
-        y: {control: {type: 'number'}},
-        width: {control: {type: 'number'}},
-        height: {control: {type: 'number'}},
     },
 } satisfies Meta<PlainTileStoryArgs>;
 
@@ -51,10 +40,5 @@ export const Default: Story = {
     args: {
         tileId: '0',
         backgroundColor: 'orange',
-        uniqueId: 'tile-id',
-        x: 16,
-        y: 16,
-        width: 200,
-        height: 140,
     }
 };

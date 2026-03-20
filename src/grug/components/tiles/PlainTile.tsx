@@ -1,4 +1,4 @@
-import type {ViewModel} from "../../viewmodel/ViewModel.ts";
+import {useViewModel, type ViewModel} from "../../viewmodel/ViewModel.ts";
 import type {PlainTileSnapshot} from "./PlainTileViewModel.ts";
 import {type CSSProperties, type JSX} from "react";
 import styles from "./PlainTile.module.css";
@@ -11,15 +11,11 @@ interface PlainTileProps {
 
 export function PlainTile({vm}: PlainTileProps): JSX.Element {
 
-    const snapshot = vm.getSnapshot();
+    const snapshot = useViewModel(vm)
 
     const style: CSSProperties = {
-        position: "absolute",
-        left: snapshot.layoutData.x,
-        top: snapshot.layoutData.y,
-        width: snapshot.layoutData.width,
-        height: snapshot.layoutData.height,
-
+        flex: 1,
+        // transition: "transform 300ms ease",
         backgroundColor: snapshot.backgroundColor
     }
     return (
