@@ -1,4 +1,4 @@
-import {LayoutEngine, type TileMetaData} from "../../layout/LayoutEngine.ts";
+import {LayoutEngine} from "../../layout/LayoutEngine.ts";
 import type {ItemLayoutData} from "../../layout/ItemLayoutData.ts";
 import {BaseViewModel} from "../../viewmodel/BaseViewModel.ts";
 import type {TileProvider} from "../../model/TileProvider.ts";

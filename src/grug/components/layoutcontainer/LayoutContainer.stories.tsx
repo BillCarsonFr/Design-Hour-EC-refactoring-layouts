@@ -1,5 +1,4 @@
 import type {JSX} from "react";
-import {useMockedViewModel} from "../../viewmodel/useMockedViewModel.ts";
 import {PlainTile} from "../tiles/PlainTile.tsx";
 import type {Meta, StoryObj} from "@storybook/react-vite";
 import {
