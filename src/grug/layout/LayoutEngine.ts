@@ -117,7 +117,7 @@ export class LayoutEngine {
         // let rowNumber = 0;
         for (const tile of this.tiles) {
 
-            if (colNumber > this.colNumber) {
+            if (colNumber >= this.colNumber) {
                 // Move to the next row
                 x = 0;
                 y += tileHeight + this.config.spacing;
