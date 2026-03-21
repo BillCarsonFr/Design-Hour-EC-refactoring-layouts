@@ -8,6 +8,8 @@ div.plainTile {
 
 p.tileId {
     font-weight: bold;
-    font-size: x-large;
+    font-family: monospace;
+    font-size: xxx-large;
+    color: white;
     margin: 0; /* remove default p margin so true centering is preserved */
 }
