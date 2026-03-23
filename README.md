@@ -1,73 +1,59 @@
-# React + TypeScript + Vite
+# VoIP Layout POC — Design Hours
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is a proof-of-concept built during the **Design Hours** session of the VoIP team.
 
-Currently, two official plugins are available:
+## Goal
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Explore an architecture for a call layout UI that combines two key ideas:
 
-## React Compiler
+- **Reactive session model** — the session and its participants are fully observable. State changes (join, leave, mute, speaking…) propagate automatically via RxJS observables.
+- **MVVM with compartmented snapshots** — each component has a dedicated ViewModel that subscribes to only the slice of state it cares about and exposes it as a plain snapshot object. The view is a pure function of that snapshot.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Why this architecture
 
-## Expanding the ESLint configuration
+### Compartmented testing
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Because each ViewModel is isolated and exposes a simple snapshot interface, it can be tested independently from the session, the layout engine, or any other component. You can unit-test the snapshot logic without rendering anything.
 
-```js
-export default defineConfig([
-  globalIgnores(["dist"]),
-  {
-    files: ["**/*.{ts,tsx}"],
-    extends: [
-      // Other configs...
+### Easy Storybook integration
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+Each component only depends on its ViewModel interface, not on a live session. This makes it trivial to mock the ViewModel in Storybook stories — just feed in a snapshot and the component renders correctly with no setup needed.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ["./tsconfig.node.json", "./tsconfig.app.json"],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
+![Layout container overview](doc/LayoutContainerSimpleItems.jpg)
+
+### Reactive by default
+
+The session model (`Session`, `Participant`) uses RxJS `BehaviorSubject`s throughout. ViewModels subscribe to the relevant observables and push updates to their snapshot, which triggers a re-render. No polling, no prop drilling.
+
+## Key layers
+
+```
+Session (RxJS)
+    │
+    ├── participants$: BehaviorSubject<Participant[]>
+    │       └── per participant: displayName$, isMuted$, isSpeaking$, isVideoEnabled$
+    │
+    ├── SessionTileProvider
+    │       Turns participant join/leave/score events into a ranked TileMetaData[]
+    │
+    ├── LayoutEngine
+    │       Computes pixel positions and sizes for each tile
+    │       based on available container size and tile scores
+    │
+    └── LayoutContainer (React)
+            │
+            └── ParticipantTileViewModel  (one per tile)
+                    Subscribes to the right participant's observables
+                    Exposes a PlainTileSnapshot { displayName, isMuted, isSpeaking, … }
+                    │
+                    └── PlainTile (React)
+                            Pure view — renders the snapshot, nothing else
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Stack
 
-```js
-// eslint.config.js
-import reactX from "eslint-plugin-react-x";
-import reactDom from "eslint-plugin-react-dom";
-
-export default defineConfig([
-  globalIgnores(["dist"]),
-  {
-    files: ["**/*.{ts,tsx}"],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs["recommended-typescript"],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ["./tsconfig.node.json", "./tsconfig.app.json"],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
-```
+- React 19 + TypeScript
+- RxJS — reactive session model
+- Vite — dev server and build
+- Storybook — component development and visual testing
+- `@vector-im/compound-web` + `@vector-im/compound-design-tokens` — Element design system
