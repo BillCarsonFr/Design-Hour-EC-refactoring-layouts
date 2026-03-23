@@ -3,7 +3,7 @@ import type {ItemLayoutData} from "./ItemLayoutData.ts";
 export interface TileMetaData {
     /** The unique identifier for this tile, used for tracking and layout purposes. */
     stableId: string;
-    isHero: boolean;
+    // isHero: boolean;
     // isMe: boolean;
     /**
      * A score representing the importance of this tile for layout purposes.
