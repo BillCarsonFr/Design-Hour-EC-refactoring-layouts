@@ -1,48 +1,38 @@
-import { LayoutEngine } from "../../layout/LayoutEngine.ts";
-import type { ItemLayoutData } from "../../layout/ItemLayoutData.ts";
+import { type TileMetaData } from "../../layout/LayoutEngine.ts";
 import { BaseViewModel } from "../../viewmodel/BaseViewModel.ts";
-import type { TileProvider } from "../../model/TileProvider.ts";
+import type { Session } from "../../session/session.ts";
+import { SessionTileProvider } from "../../model/SessionTileProvider.ts";
+
+export type LayoutTypes = "grid" | "spotlight";
 
 export interface LayoutContainerSnapshot {
-  childLayoutData: ItemLayoutData[];
-  contentHeight: number;
+  tiles: TileMetaData[];
+  mode: LayoutTypes;
 }
 
 export interface LayoutContainerActions {
-  setContainerSize: (width: number, height: number) => void;
-  // setLayoutMode: (mode: "grid" | "list") => void;
+  setLayoutMode: (mode: LayoutTypes) => void;
 }
 
 export interface LayoutContainerViewProps {
-  mode: "grid" | "list";
-  tileProvider: TileProvider;
+  mode: LayoutTypes;
+  session: Session;
 }
 
 export class LayoutContainerViewModel
   extends BaseViewModel<LayoutContainerSnapshot, LayoutContainerViewProps>
   implements LayoutContainerActions
 {
-  private readonly layoutEngine: LayoutEngine;
-
-  private readonly layoutListener = (layoutData: ItemLayoutData[]) => {
-    this.snapshot.set({
-      childLayoutData: layoutData,
-      contentHeight: this.layoutEngine.contentHeight,
-    });
-  };
-
   constructor(props: LayoutContainerViewProps) {
-    super(props, { childLayoutData: [], contentHeight: 0 });
-    this.layoutEngine = new LayoutEngine();
-    this.layoutEngine.setListener(this.layoutListener);
-    const tileProvider = this.props.tileProvider;
+    super(props, { tiles: [], mode: props.mode });
+    const tileProvider = new SessionTileProvider(props.session);
     const sub = tileProvider.tiles$.subscribe((tiles) => {
-      this.layoutEngine.updateTileInfo(tiles);
+      this.snapshot.merge({ tiles });
     });
     this.disposables.track(() => sub.unsubscribe());
   }
 
-  setContainerSize(width: number, height: number): void {
-    this.layoutEngine.updateContainerSize(width, height);
+  setLayoutMode(mode: LayoutTypes) {
+    this.snapshot.merge({ mode });
   }
 }

@@ -25,7 +25,7 @@ export interface LayoutConfig {
   spacing: number;
 }
 
-const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
+export const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
   preferredTileWidth: 360,
   preferredRatio: 1.33,
   spacing: 16,
@@ -66,9 +66,7 @@ export class LayoutEngine {
     this._listener = listener;
   }
 
-  public updateTileInfo(tiles: TileMetaData[]) {
-    const sortedTiles = [...tiles].sort((a, b) => b.score - a.score);
-
+  public updateTileInfo(sortedTiles: TileMetaData[]) {
     this.tiles = sortedTiles;
     // TODO: re-compute only if really needed.
     // For example, if the order of tiles changes we can just swap their layout data in the cachedTileLayoutData mapping without re-computing the whole layout.

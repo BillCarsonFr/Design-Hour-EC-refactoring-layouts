@@ -7,17 +7,20 @@ import {
   useRef,
 } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { LayoutContainerViewModel } from "./LayoutContainerViewModel.ts";
+import {
+  type LayoutContainerActions,
+  type LayoutContainerSnapshot,
+} from "./LayoutContainerViewModel.ts";
 import { LayoutContainer } from "./LayoutContainer.tsx";
-import type { TileProvider } from "../../model/TileProvider.ts";
-import { of } from "rxjs";
 import { useViewModel, type ViewModel } from "../../viewmodel/ViewModel.ts";
 import { BaseViewModel } from "../../viewmodel/BaseViewModel.ts";
+import { useMockedViewModel } from "../../viewmodel/useMockedViewModel.ts";
+import { DEFAULT_LAYOUT_CONFIG } from "../../layout/LayoutEngine.ts";
 
 type LayoutContainerStoryArgs = {
   numberOfTiles: number;
   preferredWidth: number;
-  preferredHeight: number;
+  preferredRatio: number;
 };
 
 interface TestTileSnapshot {
@@ -75,22 +78,22 @@ function TestTile({ vm }: TestTileViewProps) {
 function LayoutContainerStoryRender(
   args: LayoutContainerStoryArgs,
 ): JSX.Element {
-  const vm = useMemo(() => {
-    const mockTileProvider: TileProvider = {
-      tiles$: of(
-        Array.from({ length: args.numberOfTiles }, (_, i) => ({
-          stableId: i.toString(),
-          isHero: false,
-          score: 0,
-        })),
-      ),
-    };
-
-    return new LayoutContainerViewModel({
+  const mockViewModel = useMockedViewModel<
+    LayoutContainerSnapshot,
+    LayoutContainerActions
+  >(
+    {
+      tiles: Array.from({ length: args.numberOfTiles }, (_, i) => ({
+        stableId: i.toString(),
+        isHero: false,
+        score: 0,
+      })),
       mode: "grid",
-      tileProvider: mockTileProvider,
-    });
-  }, [args.numberOfTiles]);
+    },
+    {
+      setLayoutMode: (mode) => console.log("setLayoutMode", mode),
+    },
+  );
 
   const tileVmsRef = useRef<Map<string, TestTileViewModel>>(new Map());
 
@@ -113,9 +116,19 @@ function LayoutContainerStoryRender(
     };
   }, []);
 
+  const config = useMemo(
+    () => ({
+      ...DEFAULT_LAYOUT_CONFIG,
+      preferredTileWidth: args.preferredWidth,
+      preferredRatio: args.preferredRatio,
+    }),
+    [args.preferredWidth, args.preferredRatio],
+  );
+
   return (
     <LayoutContainer
-      vm={vm}
+      vm={mockViewModel}
+      config={config}
       TileComponent={TestTile}
       getTileProps={getTileProps}
     />
@@ -132,7 +145,7 @@ const meta = {
   argTypes: {
     numberOfTiles: { control: "number" },
     preferredWidth: { control: "number" },
-    preferredHeight: { control: "number" },
+    preferredRatio: { control: "number" },
   },
 } satisfies Meta<LayoutContainerStoryArgs>;
 
@@ -142,8 +155,8 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
   args: {
     numberOfTiles: 8,
-    preferredWidth: 200,
-    preferredHeight: 140,
+    preferredWidth: 300,
+    preferredRatio: 4 / 3,
   },
 };
 
