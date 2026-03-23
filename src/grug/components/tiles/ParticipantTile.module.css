@@ -1,0 +1,51 @@
+div.plainTile {
+  border-radius: 16px;
+  flex: 1;
+  padding: 16px;
+  display: flex;
+  align-items: center; /* vertical center */
+  justify-content: center; /* horizontal center */
+  background-color: var(
+    --cpd-color-bg-subtle-primary
+  ); /* light gray from compound tokens */
+
+  border: 2px solid transparent;
+  box-sizing: border-box;
+}
+
+div.plainTile.speaking {
+  border-color: var(--cpd-color-border-focused);
+  animation: speakingBreath 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes speakingBreath {
+  from {
+    box-shadow: 0 0 0 0 rgba(0, 120, 255, 0.12);
+  }
+  to {
+    box-shadow: 0 0 0 4px rgba(0, 120, 255, 0.28);
+  }
+}
+
+div.plainTile {
+  border-radius: 16px;
+  padding: 16px;
+  position: relative; /* anchor for absolute children */
+  display: flex;
+  align-items: center; /* avatar vertically centered */
+  justify-content: center; /* avatar horizontally centered */
+}
+
+div.displayName {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+}
+
+div.micIcon {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+}

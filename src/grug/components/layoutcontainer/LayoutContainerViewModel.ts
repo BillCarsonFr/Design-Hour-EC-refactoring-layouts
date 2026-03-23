@@ -10,6 +10,7 @@ export interface LayoutContainerSnapshot {
 
 export interface LayoutContainerActions {
   setContainerSize: (width: number, height: number) => void;
+  // setLayoutMode: (mode: "grid" | "list") => void;
 }
 
 export interface LayoutContainerViewProps {

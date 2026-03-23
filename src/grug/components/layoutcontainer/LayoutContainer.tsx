@@ -19,7 +19,7 @@ interface LayoutContainerProps<TTileProps extends object> {
   // Tile component is injected so the container does not depend on a concrete tile implementation.
   TileComponent: ComponentType<TTileProps>;
   // Maps each layout entry to props consumed by TileComponent
-  getTileProps: (layoutData: ItemLayoutData) => TTileProps;
+  getTileProps: (id: string) => TTileProps;
 }
 
 export function LayoutContainer<TTileProps extends object>({
@@ -51,7 +51,7 @@ export function LayoutContainer<TTileProps extends object>({
             className={styles.tileWrapper}
             style={stylesForLayoutData(layoutData, enableTransition)}
           >
-            <TileComponent {...getTileProps(layoutData)} />
+            <TileComponent {...getTileProps(layoutData.uniqueId)} />
           </div>
         ))}
       </div>
