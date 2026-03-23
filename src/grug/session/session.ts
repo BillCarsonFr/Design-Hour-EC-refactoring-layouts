@@ -1,15 +1,14 @@
-import type {Participant} from "./participant.ts";
-import {BehaviorSubject, Subject} from "rxjs";
-
+import type { Participant } from "./participant.ts";
+import { BehaviorSubject, Subject } from "rxjs";
 
 export class Session {
+  readonly id: string;
 
-    readonly id: string;
+  readonly participants$: Subject<Participant[]> = new BehaviorSubject<
+    Participant[]
+  >([]);
 
-    readonly participants$: Subject<Participant[]> = new BehaviorSubject<Participant[]>([]);
-
-    constructor(id: string) {
-        this.id = id
-    }
-
+  constructor(id: string) {
+    this.id = id;
+  }
 }

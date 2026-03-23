@@ -1,18 +1,17 @@
 .gridRoot {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    flex: 1;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  flex: 1;
 }
 
 .scrollingContent {
-    position: relative;
-    width: 100%;
-    min-height: 100%;
+  position: relative;
+  width: 100%;
+  min-height: 100%;
 }
 
 .tileWrapper {
-    display: flex;
+  display: flex;
 }
-

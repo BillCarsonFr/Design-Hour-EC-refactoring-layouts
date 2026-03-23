@@ -1,5 +1,3 @@
-
-
 import type { EventEmitter } from "events";
 
 /**
@@ -14,52 +12,56 @@ export type DisposableItem = { dispose: () => void } | (() => void);
  * that it needs to eventually relinquish.
  */
 export class Disposables {
-    private readonly disposables: DisposableItem[] = [];
-    private _isDisposed: boolean = false;
+  private readonly disposables: DisposableItem[] = [];
+  private _isDisposed: boolean = false;
 
-    /**
-     * Relinquish all tracked disposable values
-     */
-    public dispose(): void {
-        if (this.isDisposed) return;
-        this._isDisposed = true;
-        for (const disposable of this.disposables) {
-            if (typeof disposable === "function") {
-                disposable();
-            } else {
-                disposable.dispose();
-            }
-        }
+  /**
+   * Relinquish all tracked disposable values
+   */
+  public dispose(): void {
+    if (this.isDisposed) return;
+    this._isDisposed = true;
+    for (const disposable of this.disposables) {
+      if (typeof disposable === "function") {
+        disposable();
+      } else {
+        disposable.dispose();
+      }
     }
+  }
 
-    /**
-     * Track a value that needs to be eventually relinquished
-     */
-    public track<T extends DisposableItem>(disposable: T): T {
-        this.throwIfDisposed();
-        this.disposables.push(disposable);
-        return disposable;
-    }
+  /**
+   * Track a value that needs to be eventually relinquished
+   */
+  public track<T extends DisposableItem>(disposable: T): T {
+    this.throwIfDisposed();
+    this.disposables.push(disposable);
+    return disposable;
+  }
 
-    /**
-     * Add an event listener that will be removed on dispose
-     */
-    public trackListener(emitter: EventEmitter, event: string | symbol, callback: (...args: unknown[]) => void): void {
-        this.throwIfDisposed();
-        emitter.on(event, callback);
-        this.track(() => {
-            emitter.off(event, callback);
-        });
-    }
+  /**
+   * Add an event listener that will be removed on dispose
+   */
+  public trackListener(
+    emitter: EventEmitter,
+    event: string | symbol,
+    callback: (...args: unknown[]) => void,
+  ): void {
+    this.throwIfDisposed();
+    emitter.on(event, callback);
+    this.track(() => {
+      emitter.off(event, callback);
+    });
+  }
 
-    private throwIfDisposed(): void {
-        if (this.isDisposed) throw new Error("Disposable is already disposed");
-    }
+  private throwIfDisposed(): void {
+    if (this.isDisposed) throw new Error("Disposable is already disposed");
+  }
 
-    /**
-     * Whether this disposable has been disposed
-     */
-    public get isDisposed(): boolean {
-        return this._isDisposed;
-    }
+  /**
+   * Whether this disposable has been disposed
+   */
+  public get isDisposed(): boolean {
+    return this._isDisposed;
+  }
 }

@@ -1,15 +1,15 @@
 div.plainTile {
-    border-radius: 16px;
-    padding: 16px;
-    display: flex;
-    align-items: center; /* vertical center */
-    justify-content: center; /* horizontal center */
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  align-items: center; /* vertical center */
+  justify-content: center; /* horizontal center */
 }
 
 p.tileId {
-    font-weight: bold;
-    font-family: monospace;
-    font-size: xxx-large;
-    color: white;
-    margin: 0; /* remove default p margin so true centering is preserved */
+  font-weight: bold;
+  font-family: monospace;
+  font-size: xxx-large;
+  color: white;
+  margin: 0; /* remove default p margin so true centering is preserved */
 }

@@ -1,5 +1,5 @@
-import type {TileMetaData} from "../layout/LayoutEngine.ts";
+import type { TileMetaData } from "../layout/LayoutEngine.ts";
 
 export interface TileProvider {
-    getTiles(): TileMetaData[];
+  getTiles(): TileMetaData[];
 }
