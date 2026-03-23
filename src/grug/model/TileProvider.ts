@@ -1,5 +1,6 @@
 import type { TileMetaData } from "../layout/LayoutEngine.ts";
+import type { Observable } from "rxjs";
 
 export interface TileProvider {
-  getTiles(): TileMetaData[];
+  tiles$: Observable<TileMetaData[]>;
 }

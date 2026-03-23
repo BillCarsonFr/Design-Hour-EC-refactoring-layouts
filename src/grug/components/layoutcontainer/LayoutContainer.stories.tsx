@@ -5,7 +5,7 @@ import { LayoutContainerViewModel } from "./LayoutContainerViewModel.ts";
 import { LayoutContainer } from "./LayoutContainer.tsx";
 import { PlainTileViewModel } from "../tiles/PlainTileViewModel.ts";
 import type { TileProvider } from "../../model/TileProvider.ts";
-import type { TileMetaData } from "../../layout/LayoutEngine.ts";
+import { of } from "rxjs";
 
 type LayoutContainerStoryArgs = {
   numberOfTiles: number;
@@ -18,13 +18,13 @@ function LayoutContainerStoryRender(
 ): JSX.Element {
   const vm = useMemo(() => {
     const mockTileProvider: TileProvider = {
-      getTiles(): TileMetaData[] {
-        return Array.from({ length: args.numberOfTiles }, (_, i) => ({
+      tiles$: of(
+        Array.from({ length: args.numberOfTiles }, (_, i) => ({
           stableId: i.toString(),
           isHero: false,
           score: 0,
-        }));
-      },
+        })),
+      ),
     };
 
     return new LayoutContainerViewModel({
