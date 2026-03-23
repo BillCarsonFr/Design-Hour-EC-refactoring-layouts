@@ -57,18 +57,25 @@ export class LayoutEngine {
   }
 
   private _listener:
-    | ((layoutData: ItemLayoutData[], contentHeight: number) => void)
+    | ((layoutData: Map<string, ItemLayoutData>, contentHeight: number) => void)
     | null = null;
 
   public setListener(
-    listener: (layoutData: ItemLayoutData[], contentHeight: number) => void,
+    listener: (
+      layoutData: Map<string, ItemLayoutData>,
+      contentHeight: number,
+    ) => void,
   ) {
     this._listener = listener;
   }
 
-  public updateTileInfo(tiles: TileMetaData[]) {
-    const sortedTiles = [...tiles].sort((a, b) => b.score - a.score);
-
+  public updateTileInfo(tiles: Map<string, TileMetaData>) {
+    const unsortedTiles = [...tiles.entries()];
+    console.log("unsortedTiles ", unsortedTiles);
+    const sortedTiles = unsortedTiles
+      .sort((a, b) => b[1].score - a[1].score)
+      .map(([stableId, { score }]) => ({ stableId, score }));
+    console.log("sortedTiles ", sortedTiles);
     this.tiles = sortedTiles;
     // TODO: re-compute only if really needed.
     // For example, if the order of tiles changes we can just swap their layout data in the cachedTileLayoutData mapping without re-computing the whole layout.
@@ -77,7 +84,7 @@ export class LayoutEngine {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  public updateContainerSize(containerWidth: number, containerHeight: number) {
+  public updateContainerSize(containerWidth: number, _containerHeight: number) {
     // Calculate the ideal (fractional) number of tiles that fit in the container
     const idealTilesPerRow =
       (containerWidth + this.config.spacing) /
@@ -98,6 +105,13 @@ export class LayoutEngine {
     const tileHeight = tileWidth / this.config.preferredRatio;
     this.tileSize = [tileWidth, tileHeight];
     this.colNumber = tilesPerRow;
+
+    // TODO: compute only if changes?
+    this.computeLayout();
+  }
+
+  public updateMode(mode: "list" | "grid") {
+    console.log("mode updated", mode);
 
     // TODO: compute only if changes?
     this.computeLayout();
@@ -133,7 +147,6 @@ export class LayoutEngine {
       }
 
       this.cachedTileLayoutData.set(tile.stableId, {
-        uniqueId: tile.stableId,
         x,
         y,
         width: tileWidth,
@@ -146,9 +159,6 @@ export class LayoutEngine {
 
     this.contentHeight = y + tileHeight; // Total height of the content, used for scroll container sizing.
 
-    this._listener?.(
-      [...this.cachedTileLayoutData.values()],
-      this.contentHeight,
-    );
+    this._listener?.(this.cachedTileLayoutData, this.contentHeight);
   }
 }

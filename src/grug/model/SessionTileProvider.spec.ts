@@ -4,7 +4,7 @@ import { SessionTileProvider } from "./SessionTileProvider";
 import { Participant } from "../session/participant.ts";
 import { BehaviorSubject, tap } from "rxjs";
 import type { Session } from "../session/session.ts";
-import type { TileMetaData } from "../layout/LayoutEngine.ts";
+import type { TileMetaData } from "../components/layoutcontainer/layout/LayoutEngine.ts";
 import { TestScheduler } from "rxjs/testing";
 
 describe("SessionTileProvider", () => {

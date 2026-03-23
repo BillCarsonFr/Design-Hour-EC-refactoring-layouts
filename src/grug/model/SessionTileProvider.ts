@@ -1,5 +1,5 @@
 import type { TileProvider } from "./TileProvider.ts";
-import type { TileMetaData } from "../layout/LayoutEngine.ts";
+import type { TileMetaData } from "../components/layoutcontainer/layout/LayoutEngine.ts";
 import type { Participant } from "../session/participant.ts";
 
 import {
