@@ -11,6 +11,13 @@ export function partitionSpotlightTiles(
   const spotlightTiles: TileMetaData[] = [];
   const spotlightIds = new Set<string>();
 
+  // Always keep the first tile in the spotlight.
+  const firstTile = tiles[0];
+  if (firstTile) {
+    spotlightTiles.push(firstTile);
+    spotlightIds.add(firstTile.stableId);
+  }
+
   for (const tile of tiles) {
     if (!tile.isHero || spotlightIds.has(tile.stableId)) {
       continue;
@@ -20,14 +27,6 @@ export function partitionSpotlightTiles(
     spotlightIds.add(tile.stableId);
   }
 
-  if (spotlightTiles.length === 0) {
-    // No hero tiles → treat the first tile as the spotlight tile
-    const firstTile = tiles[0];
-    if (firstTile) {
-      spotlightTiles.push(firstTile);
-      spotlightIds.add(firstTile.stableId);
-    }
-  }
 
   return {
     spotlightTiles,

@@ -153,9 +153,13 @@ export class LayoutEngine implements LayoutDataEngine {
 
     this.contentHeight = y + tileHeight; // Total height of the content, used for scroll container sizing.
 
-    this._listener?.(
-      [...this.cachedTileLayoutData.values()],
-      this.contentHeight,
-    );
+    this._listener?.(this.getLayoutDataInInputOrder(), this.contentHeight);
+  }
+
+  private getLayoutDataInInputOrder(): ItemLayoutData[] {
+    return this.tiles.flatMap((tile) => {
+      const layoutData = this.cachedTileLayoutData.get(tile.stableId);
+      return layoutData ? [layoutData] : [];
+    });
   }
 }

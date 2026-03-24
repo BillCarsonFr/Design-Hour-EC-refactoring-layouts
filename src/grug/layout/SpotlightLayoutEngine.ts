@@ -82,10 +82,7 @@ export class SpotlightLayoutEngine implements LayoutDataEngine {
     this.contentHeight = Math.max(spotlightHeight, sideColumnHeight);
 
     const spotlightOffsetX = Math.max(0, (leftAreaWidth - spotlightWidth) / 2);
-    const sideOffsetY = this.computeColumnOffset(
-      containerHeight,
-      sideColumnHeight,
-    );
+    const sideOffsetY = 0;
     const sideX = containerWidth - sideColumnWidth;
 
     this.cachedTileLayoutData.clear();
@@ -116,10 +113,15 @@ export class SpotlightLayoutEngine implements LayoutDataEngine {
       });
     });
 
-    this._listener?.(
-      [...this.cachedTileLayoutData.values()],
-      this.contentHeight,
-    );
+    this._listener?.(this.getLayoutDataInInputOrder(), this.contentHeight);
+  }
+
+  private getLayoutDataInInputOrder(): ItemLayoutData[] {
+    // Keep output ordering aligned with tile input order so React child order stays stable.
+    return this.tiles.flatMap((tile) => {
+      const layoutData = this.cachedTileLayoutData.get(tile.stableId);
+      return layoutData ? [layoutData] : [];
+    });
   }
 
   private computeSideColumnWidth(
@@ -199,9 +201,4 @@ export class SpotlightLayoutEngine implements LayoutDataEngine {
     return tileHeight * tileCount + this.config.spacing * (tileCount - 1);
   }
 
-  private computeColumnOffset() // _containerHeight: number | undefined,
-  // _contentHeight: number,
-  : number {
-    return 0;
-  }
 }

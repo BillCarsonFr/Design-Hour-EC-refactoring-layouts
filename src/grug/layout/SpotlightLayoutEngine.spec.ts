@@ -160,6 +160,31 @@ describe("SpotlightLayoutEngine", () => {
     );
     expect(probe.getContentHeight()).toBeCloseTo(798);
   });
+
+  it("keeps emitted item order aligned with input tile order", () => {
+    const engine = new SpotlightLayoutEngine({
+      preferredTileWidth: 360,
+      preferredRatio: 4 / 3,
+      spacing: 16,
+    });
+    const probe = createListenerProbe();
+    engine.setListener(probe.listener);
+
+    const tiles = [
+      createTile("a", { score: 100 }),
+      createTile("b", { score: 90 }),
+      createTile("c", { isHero: true, score: 80 }),
+      createTile("d", { score: 70 }),
+      createTile("e", { isHero: true, score: 60 }),
+    ];
+
+    engine.updateContainerSize(1200, 800);
+    engine.updateTileInfo(tiles);
+
+    expect(probe.getLayoutData().map((item) => item.uniqueId)).toEqual(
+      tiles.map((tile) => tile.stableId),
+    );
+  });
 });
 
 describe("LayoutEngine", () => {
