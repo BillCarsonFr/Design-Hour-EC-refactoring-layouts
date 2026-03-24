@@ -200,5 +200,4 @@ export class SpotlightLayoutEngine implements LayoutDataEngine {
 
     return tileHeight * tileCount + this.config.spacing * (tileCount - 1);
   }
-
 }
