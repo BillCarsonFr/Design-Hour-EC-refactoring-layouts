@@ -2,15 +2,20 @@ import { useEffect, useMemo, useState } from "react";
 import {
   LayoutEngine,
   type LayoutConfig,
+  type LayoutDataEngine,
   type TileMetaData,
 } from "./LayoutEngine.ts";
 import type { ItemLayoutData } from "./ItemLayoutData.ts";
+import { SpotlightLayoutEngine } from "./SpotlightLayoutEngine.ts";
+
+export type LayoutEngineKind = "grid" | "spotlight";
 
 type UseLayoutDataParams = {
   config: LayoutConfig;
   tiles: TileMetaData[];
   width: number;
   height: number;
+  engineKind: LayoutEngineKind;
 };
 
 type LayoutState = {
@@ -23,6 +28,7 @@ export function useLayoutData({
   tiles,
   width,
   height,
+  engineKind,
 }: UseLayoutDataParams): LayoutState {
   const [state, setState] = useState<LayoutState>({
     childLayoutData: [],
@@ -30,7 +36,13 @@ export function useLayoutData({
   });
 
   // Keep one engine instance per config
-  const layoutEngine = useMemo(() => new LayoutEngine(config), [config]);
+  const layoutEngine = useMemo<LayoutDataEngine>(() => {
+    if (engineKind === "spotlight") {
+      return new SpotlightLayoutEngine(config);
+    }
+
+    return new LayoutEngine(config);
+  }, [config, engineKind]);
 
   // Subscribe to engine listener
   useEffect(() => {

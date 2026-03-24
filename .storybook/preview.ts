@@ -1,5 +1,6 @@
 import "@vector-im/compound-design-tokens/assets/web/css/compound-design-tokens.css";
 import "@vector-im/compound-web/dist/style.css";
+import "./preview.css";
 
 import type { Preview } from "@storybook/react-vite";
 
