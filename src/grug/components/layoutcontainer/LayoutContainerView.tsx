@@ -7,15 +7,32 @@ import {
   useState,
 } from "react";
 import styles from "./LayoutContainerView.module.css";
-import type { ItemLayoutData } from "./layout/ItemLayoutData.ts";
+import type { TilePositionData as TilePositionData } from "./layout/ItemLayoutData.ts";
 import useMeasure from "react-use-measure";
 import { LayoutEngine } from "./layout/LayoutEngine.ts";
 
 import { useBehavior } from "../../ec-viewmodel/Behavior.ts";
 import type { ViewModel } from "../../ec-viewmodel/ViewModel.ts";
 
+export interface TileLayoutMetaData {
+  /** The unique identifier for this tile, used for tracking and layout purposes. */
+  stableId: string;
+  // isHero: boolean;
+  // isMe: boolean;
+  /**
+   * A score representing the importance of this tile for layout purposes.
+   * Higher scores indicate higher importance.
+   * For a call it would be based on factors like whether the tile is active/speaking,
+   * whether the tile is has video enabled ot not...
+   */
+  // TODO make score implicit by TileMetaData array order
+  score: number;
+}
+
 export interface LayoutContainerSnapshot {
-  tiles: Map<string, { score: number; tile: JSX.Element; stableId: string }>;
+  // Consider splitting the two into tiles Map<string, JSX.Element> and tileMetadata: TileMetaData[]
+  tilesLayoutMetaData: TileLayoutMetaData[];
+  tiles: Map<string, JSX.Element>;
   mode: "grid" | "list";
 }
 
@@ -27,19 +44,21 @@ interface LayoutContainerViewProps {
 export function LayoutContainerView({
   vm,
 }: LayoutContainerViewProps): JSX.Element {
-  const { tiles, mode } = useBehavior(vm.snapshot$);
+  const { tilesLayoutMetaData, tiles, mode } = useBehavior(vm.snapshot$);
+  // TODO move layoutEngine to rxjs and pass it the layoutMetaData withou react hooks!
+  // const {contentHight, tilesPositionData} = useBehavior(LayoutEngine$(tilesLayoutMetaData$, mode$, width$, height$))
   const [ref, { width, height }] = useMeasure();
 
   const [contentHeight, setContentHeight] = useState(0);
-  const [layoutDataMap, setLayoutDataMap] = useState({
-    map: new Map<string, ItemLayoutData>(),
-  });
+  const [tilesPositionData, setTilesPositionData] = useState<
+    TilePositionData[]
+  >([]);
 
   const layoutListener = useCallback(
-    (layoutData: Map<string, ItemLayoutData>, contentHeight: number) => {
+    (positionData: TilePositionData[], contentHeight: number) => {
       setContentHeight(contentHeight);
-      // wrap in additional object so we actually get a react rerender
-      setLayoutDataMap({ map: layoutData });
+      // Clone array so we actually get a react render
+      setTilesPositionData(Array.from(positionData));
     },
     [],
   );
@@ -56,30 +75,14 @@ export function LayoutContainerView({
     if (width <= 0) return;
     layoutEngine.updateContainerSize(width, height);
   }, [layoutEngine, width, height]);
-
   useEffect(() => {
-    layoutEngine.updateTileInfo(tiles);
-  }, [layoutEngine, tiles]);
-
+    layoutEngine.updateTileInfo(tilesLayoutMetaData);
+  }, [layoutEngine, tilesLayoutMetaData]);
   useEffect(() => {
     layoutEngine.updateMode(mode);
   }, [layoutEngine, mode]);
 
   const enableTransition = width > 0 && height > 0;
-
-  const tilesRenderData = useMemo(() => {
-    return Array.from(tiles.entries())
-      .map(([uniqueId, { tile }]) => {
-        const layoutData = layoutDataMap.map.get(uniqueId);
-        if (layoutData === undefined) return null;
-        return {
-          id: uniqueId,
-          tile,
-          style: stylesForLayoutData(layoutData, enableTransition),
-        };
-      })
-      .filter((item) => item !== null);
-  }, [tiles, layoutDataMap, enableTransition]);
 
   return (
     <div ref={ref} className={styles.gridRoot}>
@@ -87,11 +90,18 @@ export function LayoutContainerView({
         className={styles.scrollingContent}
         style={{ height: contentHeight }}
       >
-        {tilesRenderData.map(({ id, tile, style }) => (
-          <div key={id} className={styles.tileWrapper} style={style}>
-            {tile}
-          </div>
-        ))}
+        {tilesPositionData.map((data) => {
+          const style = stylesForPositionData(data, enableTransition);
+          return (
+            <div
+              key={data.stableId}
+              className={styles.tileWrapper}
+              style={style}
+            >
+              {tiles.get(data.stableId)}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -99,20 +109,20 @@ export function LayoutContainerView({
 
 /**
  * Get the position and size styles for a given layout data.
- * @param layoutData
+ * @param positionData
  * @param enableTransition - Whether to enable transition animations.
  */
-function stylesForLayoutData(
-  layoutData: ItemLayoutData,
+function stylesForPositionData(
+  positionData: TilePositionData,
   enableTransition: boolean,
 ): CSSProperties {
   return {
     position: "absolute",
     // Use transform instead of top/left for better performance when animating position changes,
     // as it can be GPU-accelerated and doesn't trigger layout recalculations.
-    transform: `translate3d(${layoutData.x}px, ${layoutData.y}px, 0)`,
-    width: layoutData.width,
-    height: layoutData.height,
+    transform: `translate3d(${positionData.x}px, ${positionData.y}px, 0)`,
+    width: positionData.width,
+    height: positionData.height,
     transition: enableTransition
       ? "transform 300ms ease, width 300ms ease, height 300ms ease"
       : "none",

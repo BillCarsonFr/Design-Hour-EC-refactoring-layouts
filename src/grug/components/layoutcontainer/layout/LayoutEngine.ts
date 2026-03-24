@@ -1,18 +1,5 @@
-import type { ItemLayoutData } from "./ItemLayoutData.ts";
-
-export interface TileMetaData {
-  /** The unique identifier for this tile, used for tracking and layout purposes. */
-  stableId: string;
-  // isHero: boolean;
-  // isMe: boolean;
-  /**
-   * A score representing the importance of this tile for layout purposes.
-   * Higher scores indicate higher importance.
-   * For a call it would be based on factors like whether the tile is active/speaking,
-   * whether the tile is has video enabled ot not...
-   */
-  score: number;
-}
+import type { TileLayoutMetaData } from "../LayoutContainerView.tsx";
+import type { TilePositionData } from "./ItemLayoutData.ts";
 
 export interface LayoutConfig {
   // This is the preferred width for tiles in the layout.
@@ -34,7 +21,7 @@ const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
 export class LayoutEngine {
   private readonly config: LayoutConfig;
 
-  private cachedTileLayoutData: Map<string, ItemLayoutData> = new Map();
+  private cachedTileLayoutData: TilePositionData[] = [];
   /**
    * The current width and height of a child tile.
    * Tiles all have the same size in the current layout algorithm.
@@ -49,7 +36,7 @@ export class LayoutEngine {
    * Ordered by their score, with the most important tiles first.
    * @private
    */
-  private tiles: TileMetaData[] = [];
+  private tiles: TileLayoutMetaData[] = [];
   contentHeight: number = 0;
 
   constructor(config: LayoutConfig = DEFAULT_LAYOUT_CONFIG) {
@@ -57,25 +44,20 @@ export class LayoutEngine {
   }
 
   private _listener:
-    | ((layoutData: Map<string, ItemLayoutData>, contentHeight: number) => void)
+    | ((layoutData: TilePositionData[], contentHeight: number) => void)
     | null = null;
 
   public setListener(
-    listener: (
-      layoutData: Map<string, ItemLayoutData>,
-      contentHeight: number,
-    ) => void,
+    listener: (layoutData: TilePositionData[], contentHeight: number) => void,
   ) {
     this._listener = listener;
   }
 
-  public updateTileInfo(tiles: Map<string, TileMetaData>) {
-    const unsortedTiles = [...tiles.entries()];
-    console.log("unsortedTiles ", unsortedTiles);
-    const sortedTiles = unsortedTiles
-      .sort((a, b) => b[1].score - a[1].score)
-      .map(([stableId, { score }]) => ({ stableId, score }));
-    console.log("sortedTiles ", sortedTiles);
+  public updateTileInfo(tiles: TileLayoutMetaData[]) {
+    // TODO make score implicit
+    const unsortedTiles = [...tiles];
+    const sortedTiles = unsortedTiles.sort((a, b) => b.score - a.score);
+
     this.tiles = sortedTiles;
     // TODO: re-compute only if really needed.
     // For example, if the order of tiles changes we can just swap their layout data in the cachedTileLayoutData mapping without re-computing the whole layout.
@@ -129,7 +111,7 @@ export class LayoutEngine {
     }
 
     // const layout = [];
-    this.cachedTileLayoutData.clear();
+    this.cachedTileLayoutData = [];
     let x = 0;
     let y = 0;
 
@@ -146,7 +128,8 @@ export class LayoutEngine {
         colNumber = 0;
       }
 
-      this.cachedTileLayoutData.set(tile.stableId, {
+      this.cachedTileLayoutData.push({
+        stableId: tile.stableId,
         x,
         y,
         width: tileWidth,

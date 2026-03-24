@@ -3,6 +3,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import {
   LayoutContainerView,
   type LayoutContainerSnapshot,
+  type TileLayoutMetaData,
 } from "./LayoutContainerView.tsx";
 import { BehaviorSubject } from "rxjs";
 import type { ViewModel } from "../../ec-viewmodel/ViewModel.ts";
@@ -57,64 +58,79 @@ class MockViewModel implements ViewModel<
   }
 
   public snapshot$ = new BehaviorSubject<LayoutContainerSnapshot>({
+    tilesLayoutMetaData: [],
     tiles: new Map(),
     mode: "grid",
   });
 
   public setNumberOfTiles(amount: number): void {
-    const tileIds = [...Array(amount).keys()].map((i) => `tile-${i}`);
     const tiles = new Map();
+    const tilesLayoutMetaData: TileLayoutMetaData[] = [];
+
+    const tileIds = [...Array(amount).keys()].map((i) => `tile-${i}`);
     tileIds.forEach((id) => {
-      console.log("tilesId:", id);
-      tiles.set(id, {
-        tile: (
-          <TestTile
-            key={id}
-            tileId={id}
-            onClick={() => {
-              const score = this.snapshot$.value.tiles.get(id)?.score;
-              this.setScoreOfTile(id, (score ?? 0) + 1);
-            }}
-          />
-        ),
-        score: 0,
-        stableId: id,
-      });
+      tiles.set(
+        id,
+        <TestTile
+          key={id}
+          tileId={id}
+          onClick={() => {
+            const score = this.snapshot$.value.tilesLayoutMetaData.find(
+              (t) => t.stableId === id,
+            )?.score;
+            this.setScoreOfTile(id, (score ?? 0) + 1);
+          }}
+        />,
+      );
+      tilesLayoutMetaData.push({ stableId: id, score: 0 });
     });
 
     this.snapshot$.next({
+      tilesLayoutMetaData,
       tiles,
       mode: "grid",
     });
   }
+
   public addTile(): void {
     const snapshot = this.snapshot$.value;
-    const newTileId = `tile-${snapshot.tiles.size}`;
-    snapshot.tiles.set(newTileId, {
-      tile: (
-        <TestTile
-          key={newTileId}
-          tileId={newTileId}
-          onClick={() => {
-            const score = snapshot.tiles.get(newTileId)?.score;
-            this.setScoreOfTile(newTileId, (score ?? 0) + 1);
-          }}
-        />
-      ),
-      score: 0,
-      stableId: newTileId,
+    const newTileId = `tile-${snapshot.tilesLayoutMetaData.length}`;
+
+    snapshot.tiles.set(
+      newTileId,
+      <TestTile
+        key={newTileId}
+        tileId={newTileId}
+        onClick={() => {
+          const score = snapshot.tilesLayoutMetaData.find(
+            (t) => t.stableId === newTileId,
+          )?.score;
+          this.setScoreOfTile(newTileId, (score ?? 0) + 1);
+        }}
+      />,
+    );
+
+    snapshot.tilesLayoutMetaData.push({ stableId: newTileId, score: 0 });
+
+    this.snapshot$.next({
+      ...snapshot,
+      // duplicate array to trigger react
+      tilesLayoutMetaData: Array.from(snapshot.tilesLayoutMetaData),
     });
-    this.snapshot$.next({ ...snapshot, tiles: new Map(snapshot.tiles) });
   }
 
   public setScoreOfTile(tileId: string, score: number): void {
     const snapshot = this.snapshot$.value;
-    const tileMeta = snapshot.tiles.get(tileId);
+    const tileMeta = snapshot.tilesLayoutMetaData.find(
+      (t) => t.stableId === tileId,
+    );
     if (tileMeta) {
       tileMeta.score = score;
-      // Duplicate to trigger react
-      const tiles = new Map(snapshot.tiles);
-      this.snapshot$.next({ ...snapshot, tiles });
+      this.snapshot$.next({
+        ...snapshot,
+        // Duplicate Array to trigger react
+        tilesLayoutMetaData: Array.from(snapshot.tilesLayoutMetaData),
+      });
     }
   }
 }

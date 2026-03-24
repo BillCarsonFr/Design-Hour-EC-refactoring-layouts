@@ -1,5 +1,5 @@
 import type { TileProvider } from "./TileProvider.ts";
-import type { TileMetaData } from "../components/layoutcontainer/layout/LayoutEngine.ts";
+
 import type { Participant } from "../session/participant.ts";
 
 import {
@@ -18,13 +18,14 @@ import {
   takeUntil,
 } from "rxjs";
 import type { Session } from "../session/session.ts";
+import type { TileLayoutMetaData } from "../components/layoutcontainer/LayoutContainerView.tsx";
 
 type JoinEvent = { type: "join"; participant: Participant; joinOrder: number };
 type LeaveEvent = { type: "leave"; id: string };
 type ScoreEvent = { type: "score"; id: string; score: number };
 type Event = JoinEvent | LeaveEvent | ScoreEvent;
 
-type Entry = TileMetaData & {
+type Entry = TileLayoutMetaData & {
   // Tie breakers for sorting
   lastSpokeAt: number;
   joinOrder: number;
@@ -36,11 +37,11 @@ type State = {
 
 export class SessionTileProvider implements TileProvider {
   // Todo make this reactive
-  getTiles(): TileMetaData[] {
+  getTiles(): TileLayoutMetaData[] {
     return [];
   }
 
-  public tiles$ = new Observable<TileMetaData[]>();
+  public tiles$ = new Observable<TileLayoutMetaData[]>();
 
   constructor(session: Session) {
     // 1) Snapshot diff -> join/leave deltas

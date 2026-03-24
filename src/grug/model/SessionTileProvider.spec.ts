@@ -4,8 +4,8 @@ import { SessionTileProvider } from "./SessionTileProvider";
 import { Participant } from "../session/participant.ts";
 import { BehaviorSubject, tap } from "rxjs";
 import type { Session } from "../session/session.ts";
-import type { TileMetaData } from "../components/layoutcontainer/layout/LayoutEngine.ts";
 import { TestScheduler } from "rxjs/testing";
+import type { TileLayoutMetaData } from "../components/layoutcontainer/LayoutContainerView.tsx";
 
 describe("SessionTileProvider", () => {
   let scheduler: TestScheduler;
@@ -34,7 +34,7 @@ describe("SessionTileProvider", () => {
       bob.isSpeaking$.next(true);
       carl.isVideoEnabled$.next(true);
 
-      const emissions: TileMetaData[][] = [];
+      const emissions: TileLayoutMetaData[][] = [];
       provider.tiles$
         .pipe(tap(console.log))
         .subscribe((tiles) => emissions.push(tiles));
@@ -60,7 +60,7 @@ describe("SessionTileProvider", () => {
       const bob = new Participant("1", "bob");
       const carl = new Participant("2", "carl");
 
-      const emissions: TileMetaData[][] = [];
+      const emissions: TileLayoutMetaData[][] = [];
       provider.tiles$
         .pipe(tap(console.log))
         .subscribe((tiles) => emissions.push(tiles));
