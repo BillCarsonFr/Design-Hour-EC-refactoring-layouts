@@ -3,11 +3,11 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import {
   LayoutContainerView,
   type LayoutContainerSnapshot,
-  type TileLayoutMetaData,
 } from "./LayoutContainerView.tsx";
 import { BehaviorSubject } from "rxjs";
 import type { ViewModel } from "../../ec-viewmodel/ViewModel.ts";
 import { screen } from "storybook/test";
+import type { TileLayoutMetaData } from "./TileDataInterfaces.ts";
 
 type LayoutContainerStoryArgs = {
   /**
@@ -15,7 +15,6 @@ type LayoutContainerStoryArgs = {
    */
   numberOfTiles: number;
   mode: "grid" | "spotlight";
-  containerHeight: string;
 };
 
 interface TestTileSnapshot {
@@ -34,9 +33,11 @@ function TestTile({ tileId, onClick }: TestTileSnapshot) {
   };
 
   return (
-    <div style={style} onClick={onClick}>
+    <div style={style}>
       <p
+        onClick={onClick}
         style={{
+          pointerEvents: "auto",
           fontFamily: "monospace",
           fontSize: "3rem",
           fontWeight: "700",
@@ -139,7 +140,7 @@ const meta = {
   render: (args: LayoutContainerStoryArgs) => {
     const vm = new MockViewModel(args);
     return (
-      <div style={{ height: args.containerHeight }}>
+      <div style={{ height: "100%" }}>
         <div
           data-testid="add"
           onClick={() => vm.addTile()}
@@ -161,7 +162,6 @@ export const Default: Story = {
   args: {
     numberOfTiles: 4,
     mode: "grid",
-    containerHeight: "700px",
   },
 };
 
@@ -169,7 +169,6 @@ export const Spotlight: Story = {
   args: {
     numberOfTiles: 2,
     mode: "spotlight",
-    containerHeight: "600px",
   },
 };
 
@@ -177,7 +176,6 @@ export const SpeakerMovesUp: Story = {
   args: {
     numberOfTiles: 2,
     mode: "grid",
-    containerHeight: "800px",
   },
   play: async (inputs) => {
     const { userEvent } = inputs;

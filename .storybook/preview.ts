@@ -11,6 +11,7 @@ const preview: Preview = {
         date: /Date$/i,
       },
     },
+
     tags: ["autodocs"],
     a11y: {
       // 'todo' - show a11y violations in the test UI only

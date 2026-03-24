@@ -7,33 +7,17 @@ import {
   useState,
 } from "react";
 import styles from "./LayoutContainerView.module.css";
-import type { TilePositionData as TilePositionData } from "./layout/ItemLayoutData.ts";
 import useMeasure from "react-use-measure";
-import { LayoutEngine } from "./layout/LayoutEngine.ts";
+import { LayoutEngine } from "./LayoutEngine.ts";
 
 import { useBehavior } from "../../ec-viewmodel/Behavior.ts";
 import type { ViewModel } from "../../ec-viewmodel/ViewModel.ts";
-
-/** The per tile position related data provided by the ViewModel.
- * This is very high level metadata. The view itself is resposible to compute the position of the tiles
- */
-export interface TileLayoutMetaData {
-  /** The unique identifier for this tile, used for tracking and layout purposes. */
-  id: string;
-  // isHero: boolean;
-  // isMe: boolean;
-  /**
-   * A score representing the importance of this tile for layout purposes.
-   * Higher scores indicate higher importance.
-   * For a call it would be based on factors like whether the tile is active/speaking,
-   * whether the tile is has video enabled ot not...
-   */
-  // TODO make score implicit by TileMetaData array order
-  score: number;
-}
+import type {
+  TileLayoutMetaData,
+  TilePositionData,
+} from "./TileDataInterfaces.ts";
 
 export interface LayoutContainerSnapshot {
-  // Consider splitting the two into tiles Map<string, JSX.Element> and tileMetadata: TileMetaData[]
   tilesLayoutMetaData: TileLayoutMetaData[];
   tiles: Map<string, JSX.Element>;
   mode: "grid" | "spotlight";
@@ -91,6 +75,7 @@ export function LayoutContainerView({
     <div ref={ref} className={styles.gridRoot}>
       <div
         className={styles.scrollingContent}
+        // transform to create a fixed position containing box
         style={{ height: contentHeight }}
       >
         {tilesPositionData
@@ -120,7 +105,8 @@ function stylesForPositionData(
   enableTransition: boolean,
 ): CSSProperties {
   return {
-    position: "absolute",
+    position: positionData.fixed ? "fixed" : "absolute",
+    pointerEvents: positionData.fixed ? "none" : "auto",
     // Use transform instead of top/left for better performance when animating position changes,
     // as it can be GPU-accelerated and doesn't trigger layout recalculations.
     transform: `translate3d(${positionData.x}px, ${positionData.y}px, 0)`,

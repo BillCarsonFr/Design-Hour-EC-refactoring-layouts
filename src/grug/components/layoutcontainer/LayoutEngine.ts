@@ -1,5 +1,7 @@
-import type { TileLayoutMetaData } from "../LayoutContainerView.tsx";
-import type { TilePositionData } from "./ItemLayoutData.ts";
+import type {
+  TileLayoutMetaData,
+  TilePositionData,
+} from "./TileDataInterfaces.ts";
 
 export interface LayoutConfig {
   // This is the preferred width for tiles in the layout.
@@ -127,26 +129,42 @@ export class LayoutEngine {
     console.debug("computeLayout mode", this.mode);
     if (this.mode === "spotlight") {
       this.cachedTileLayoutData = [];
-      const spotlight = this.tiles[0].id;
 
+      const tileSpotlight = this.tiles[0];
+      const tilesScrolling = this.tiles.slice(1);
+      const HEIGHT = 250;
+      const WIDTH = 320;
       this.cachedTileLayoutData.push({
-        id: spotlight,
+        id: tileSpotlight.id,
         x: this.config.spacing,
         y: this.config.spacing,
-        width: this.containerWidth - 4 * this.config.spacing - 400,
+        width: this.containerWidth - 3 * this.config.spacing - WIDTH,
         height: this.containerHeight - 2 * this.config.spacing,
+        fixed: true,
+        zIndex: 1,
       });
-      for (let i = 2; i < this.tiles.length; i++) {
+      for (let i = 0; i < tilesScrolling.length; i++) {
+        const scrollTileLeft =
+          this.containerWidth - WIDTH - this.config.spacing;
+        const scrollTileTop =
+          i * (HEIGHT + this.config.spacing) + this.config.spacing;
         this.cachedTileLayoutData.push({
-          id: this.tiles[i].id,
-          x: this.containerWidth - 400 - this.config.spacing,
-          y: this.config.spacing + (i - 2) * (300 + this.config.spacing),
-          width: 400,
-          height: 300,
+          id: tilesScrolling[i].id,
+          x: scrollTileLeft,
+          y: scrollTileTop,
+          width: WIDTH,
+          height: HEIGHT,
+          fixed: false,
+          zIndex: 0,
         });
       }
 
-      this.contentHeight = this.containerHeight;
+      const scrollingSize =
+        // height from tiles
+        tilesScrolling.length * HEIGHT +
+        // height from spacing (+1 since we have top and bottom spacing -> one more space than tiles)
+        (tilesScrolling.length + 1) * this.config.spacing;
+      this.contentHeight = Math.max(this.containerHeight, scrollingSize);
     } else if (this.mode === "grid") {
       this.cachedTileLayoutData = [];
       let x = 0;
@@ -171,6 +189,8 @@ export class LayoutEngine {
           y,
           width: tileWidth,
           height: tileHeight,
+          fixed: false,
+          zIndex: 0,
         });
 
         x += tileWidth + this.config.spacing;
