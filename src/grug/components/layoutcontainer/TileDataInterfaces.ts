@@ -28,6 +28,7 @@ export interface TileLayoutMetaData {
   id: string;
   // isHero: boolean;
   // isMe: boolean;
+  // isScreenshare: boolean;
   /**
    * A score representing the importance of this tile for layout purposes.
    * Higher scores indicate higher importance.

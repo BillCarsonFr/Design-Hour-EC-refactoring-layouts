@@ -3,6 +3,7 @@
   width: 100%;
   height: 100%;
   overflow-y: scroll;
+  overflow-x: hidden;
   flex: 1;
   /*Might be needed to set the fixed container box*/
   /*transform: `translate3d(0, 0, 0)`*/

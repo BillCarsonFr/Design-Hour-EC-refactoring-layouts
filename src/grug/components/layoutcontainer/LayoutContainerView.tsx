@@ -1,21 +1,16 @@
-import {
-  type CSSProperties,
-  type JSX,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { type CSSProperties, type JSX } from "react";
 import styles from "./LayoutContainerView.module.css";
 import useMeasure from "react-use-measure";
-import { LayoutEngine } from "./LayoutEngine.ts";
 
-import { useBehavior } from "../../ec-viewmodel/Behavior.ts";
-import type { ViewModel } from "../../ec-viewmodel/ViewModel.ts";
+import { useSnapshot, type ViewModel } from "../../ec-viewmodel/ViewModel.ts";
 import type {
   TileLayoutMetaData,
   TilePositionData,
 } from "./TileDataInterfaces.ts";
+
+import { useObservable, useObservableState } from "observable-hooks";
+import { map, startWith } from "rxjs";
+import { LayoutEngine$ } from "./LayoutEngineFunction.ts";
 
 export interface LayoutContainerSnapshot {
   tilesLayoutMetaData: TileLayoutMetaData[];
@@ -31,54 +26,43 @@ interface LayoutContainerViewProps {
 export function LayoutContainerView({
   vm,
 }: LayoutContainerViewProps): JSX.Element {
-  const { tilesLayoutMetaData, tiles, mode } = useBehavior(vm.snapshot$);
-  // TODO move layoutEngine to rxjs and pass it the layoutMetaData withou react hooks!
-  // const {contentHight, tilesPositionData} = useBehavior(LayoutEngine$(tilesLayoutMetaData$, mode$, width$, height$))
+  const snapshot$ = useSnapshot(vm);
+  const tiles = useObservableState(snapshot$.pipe(map((s) => s.tiles)));
+
   const [ref, { width, height }] = useMeasure();
-
-  const [contentHeight, setContentHeight] = useState(0);
-  const [tilesPositionData, setTilesPositionData] = useState<
-    TilePositionData[]
-  >([]);
-
-  const layoutListener = useCallback(
-    (positionData: TilePositionData[], contentHeight: number) => {
-      setContentHeight(contentHeight);
-      // Clone array so we actually get a react render
-      setTilesPositionData(Array.from(positionData));
-    },
-    [],
+  const enableTransition = width > 0 && height > 0;
+  const containerSize$ = useObservable(
+    (inputs$) =>
+      inputs$.pipe(
+        map(([w, h]) => ({ w, h })),
+        startWith({ w: 0, h: 0 }),
+      ),
+    [width, height],
   );
 
-  const layoutEngine = useMemo(() => {
-    const engine = new LayoutEngine();
-    engine.setListener(layoutListener);
-    return engine;
-  }, [layoutListener]);
+  const layoutData = useObservableState(
+    useObservable(() => LayoutEngine$(snapshot$, containerSize$)),
+  );
 
-  useEffect(() => {
-    // Only check width here, as height can be 0 when the container is first rendered,
-    // and will only be updated after the first layout calculated the scroll height.
-    if (width <= 0) return;
-    layoutEngine.updateContainerSize(width, height);
-  }, [layoutEngine, width, height]);
-  useEffect(() => {
-    layoutEngine.updateTileInfo(tilesLayoutMetaData);
-  }, [layoutEngine, tilesLayoutMetaData]);
-  useEffect(() => {
-    layoutEngine.updateMode(mode);
-  }, [layoutEngine, mode]);
-
-  const enableTransition = width > 0 && height > 0;
-  console.log("tilesPositionData", tilesPositionData);
   return (
     <div ref={ref} className={styles.gridRoot}>
       <div
         className={styles.scrollingContent}
         // transform to create a fixed position containing box
-        style={{ height: contentHeight }}
+        style={{ height: layoutData?.contentHeight }}
       >
-        {tilesPositionData
+        {/* Alternative
+
+         {layoutReactElementTree}
+         tiles.values().map((tile) => {
+           return <ReactSpringSlot itToAttachTo={data.id} refToLayoutTree={layoutTreeRef} key={data.id} >
+             {tiles.get(data.id)}
+           </ReactSpringSlot>
+         })
+
+          */}
+
+        {layoutData?.tilesPositionData
           // We order by stable id to ensure consistent dom tree ordering across renders.
           // Otherwise items might get repositioned in the dom and css wont work with: `transform 300ms ease`.
           .sort((a, b) => a.id.localeCompare(b.id))
@@ -86,7 +70,7 @@ export function LayoutContainerView({
             const style = stylesForPositionData(data, enableTransition);
             return (
               <div key={data.id} className={styles.tileWrapper} style={style}>
-                {tiles.get(data.id)}
+                {tiles?.get(data.id)}
               </div>
             );
           })}

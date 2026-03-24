@@ -1,4 +1,4 @@
-import { type CSSProperties } from "react";
+import { useMemo, type CSSProperties } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import {
   LayoutContainerView,
@@ -67,7 +67,7 @@ class MockViewModel implements ViewModel<
 
   public setNumberOfTiles(amount: number, mode: "grid" | "spotlight"): void {
     const tiles = new Map();
-    const tilesLayoutMetaData: TileLayoutMetaData[] = [];
+    const newTilesLayoutMetaData: TileLayoutMetaData[] = [];
 
     const tileIds = [...Array(amount).keys()].map((i) => `tile-${i}`);
     tileIds.forEach((id) => {
@@ -84,14 +84,16 @@ class MockViewModel implements ViewModel<
           }}
         />,
       );
-      tilesLayoutMetaData.push({ id: id, score: 0 });
+      newTilesLayoutMetaData.push({ id: id, score: 0 });
     });
 
-    this.snapshot$.next({
-      tilesLayoutMetaData,
+    const newSnapshot = {
+      tilesLayoutMetaData: newTilesLayoutMetaData,
       tiles,
       mode,
-    });
+    };
+    console.log("update snapshot via setNumberOfTiles", newSnapshot);
+    this.snapshot$.next(newSnapshot);
   }
 
   public addTile(): void {
@@ -138,7 +140,8 @@ class MockViewModel implements ViewModel<
 const meta = {
   title: "Grug/Container/LayoutContainer",
   render: (args: LayoutContainerStoryArgs) => {
-    const vm = new MockViewModel(args);
+    const vm = useMemo(() => new MockViewModel(args), [args]);
+
     return (
       <div style={{ height: "100%" }}>
         <div

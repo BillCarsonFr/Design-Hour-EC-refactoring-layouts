@@ -5,7 +5,7 @@ import { Participant } from "../session/participant.ts";
 import { BehaviorSubject, tap } from "rxjs";
 import type { Session } from "../session/session.ts";
 import { TestScheduler } from "rxjs/testing";
-import type { TileLayoutMetaData } from "../components/layoutcontainer/LayoutContainerView.tsx";
+import type { TileLayoutMetaData } from "../components/layoutcontainer/TileDataInterfaces.ts";
 
 describe("SessionTileProvider", () => {
   let scheduler: TestScheduler;

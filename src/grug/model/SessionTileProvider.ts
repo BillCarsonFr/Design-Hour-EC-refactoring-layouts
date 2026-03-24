@@ -18,7 +18,7 @@ import {
   takeUntil,
 } from "rxjs";
 import type { Session } from "../session/session.ts";
-import type { TileLayoutMetaData } from "../components/layoutcontainer/LayoutContainerView.tsx";
+import type { TileLayoutMetaData } from "../components/layoutcontainer/TileDataInterfaces.ts";
 
 type JoinEvent = { type: "join"; participant: Participant; joinOrder: number };
 type LeaveEvent = { type: "leave"; id: string };
