@@ -47,11 +47,20 @@ class TestTileViewModel extends BaseViewModel<
 type TestTileViewProps = {
   vm: ViewModel<TestTileSnapshot>;
   onClose: () => void;
+  isHero: boolean;
+  onHeroChange: (isHero: boolean) => void;
   weight: number;
   onWeightChange: (weight: number) => void;
 };
 
-function TestTile({ vm, onClose, weight, onWeightChange }: TestTileViewProps) {
+function TestTile({
+  vm,
+  onClose,
+  isHero,
+  onHeroChange,
+  weight,
+  onWeightChange,
+}: TestTileViewProps) {
   const snapshot = useViewModel(vm);
   const [draftWeight, setDraftWeight] = useState(weight);
 
@@ -96,6 +105,28 @@ function TestTile({ vm, onClose, weight, onWeightChange }: TestTileViewProps) {
         }}
       >
         x
+      </button>
+
+      <button
+        type="button"
+        onClick={() => onHeroChange(!isHero)}
+        aria-pressed={isHero}
+        style={{
+          position: "absolute",
+          top: 8,
+          left: 8,
+          border: "none",
+          borderRadius: 999,
+          padding: "6px 10px",
+          cursor: "pointer",
+          fontWeight: 700,
+          background: isHero
+            ? "rgba(255, 255, 255, 0.92)"
+            : "rgba(0, 0, 0, 0.28)",
+          color: isHero ? "#111" : "white",
+        }}
+      >
+        {isHero ? "Hero" : "Make hero"}
       </button>
 
       <p
@@ -163,6 +194,7 @@ function LayoutContainerStoryRender(
   args: LayoutContainerStoryArgs,
 ): JSX.Element {
   const [vm] = useState(() => new StoryLayoutContainerViewModel());
+  const snapshot = useViewModel(vm);
   const tileVmsRef = useRef<Map<string, TestTileViewModel>>(new Map());
   const nextTileIdRef = useRef(0);
 
@@ -171,6 +203,7 @@ function LayoutContainerStoryRender(
     const initialTiles = sortTilesByWeight(
       Array.from({ length: initialTilesCount }, (_, i) => ({
         stableId: i.toString(),
+        isHero: false,
         score: 0,
       })),
     );
@@ -205,6 +238,15 @@ function LayoutContainerStoryRender(
     vm.setTiles(sortTilesByWeight(updatedTiles));
   };
 
+  const handleTileHeroChange = (tileId: string, isHero: boolean) => {
+    const currentTiles = vm.getSnapshot().tiles;
+    vm.setTiles(
+      currentTiles.map((tile) =>
+        tile.stableId === tileId ? { ...tile, isHero } : tile,
+      ),
+    );
+  };
+
   const getTileProps = (id: string) => {
     let tileVm = tileVmsRef.current.get(id);
     if (!tileVm) {
@@ -213,11 +255,15 @@ function LayoutContainerStoryRender(
     }
 
     const tile = vm.getSnapshot().tiles.find((item) => item.stableId === id);
+    const isHero = tile?.isHero ?? false;
     const weight = tile?.score ?? 0;
 
     return {
       vm: tileVm,
       onClose: () => removeTileById(id),
+      isHero,
+      onHeroChange: (nextIsHero: boolean) =>
+        handleTileHeroChange(id, nextIsHero),
       weight,
       onWeightChange: (nextWeight: number) =>
         handleTileWeightChange(id, nextWeight),
@@ -228,7 +274,10 @@ function LayoutContainerStoryRender(
     const tileId = String(nextTileIdRef.current++);
     const currentTiles = vm.getSnapshot().tiles;
     vm.setTiles(
-      sortTilesByWeight([...currentTiles, { stableId: tileId, score: 0 }]),
+      sortTilesByWeight([
+        ...currentTiles,
+        { stableId: tileId, isHero: false, score: 0 },
+      ]),
     );
     args.addTile?.(tileId);
   };
@@ -266,9 +315,24 @@ function LayoutContainerStoryRender(
         flexDirection: "column",
         gap: 12,
         width: "100%",
+        height: "100%",
       }}
     >
-      <div style={{ display: "flex", gap: 8 }}>
+      <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+        <button
+          type="button"
+          onClick={() => vm.setLayoutMode("grid")}
+          style={{ fontWeight: snapshot.mode === "grid" ? 700 : 400 }}
+        >
+          Grid
+        </button>
+        <button
+          type="button"
+          onClick={() => vm.setLayoutMode("spotlight")}
+          style={{ fontWeight: snapshot.mode === "spotlight" ? 700 : 400 }}
+        >
+          Spotlight
+        </button>
         <button type="button" onClick={handleAddTile}>
           Add tile
         </button>
@@ -277,12 +341,14 @@ function LayoutContainerStoryRender(
         </button>
       </div>
 
-      <LayoutContainer
-        vm={vm}
-        config={DEFAULT_LAYOUT_CONFIG}
-        TileComponent={TestTile}
-        getTileProps={getTileProps}
-      />
+      <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
+        <LayoutContainer
+          vm={vm}
+          config={DEFAULT_LAYOUT_CONFIG}
+          TileComponent={TestTile}
+          getTileProps={getTileProps}
+        />
+      </div>
     </div>
   );
 }
@@ -290,7 +356,7 @@ function LayoutContainerStoryRender(
 const meta = {
   title: "Grug/Container/DynamicLayoutContainer",
   render: (args: LayoutContainerStoryArgs) => (
-    <div style={{ display: "flex" }}>
+    <div style={{ display: "flex", height: "100%", width: "100%" }}>
       <LayoutContainerStoryRender {...args} />
     </div>
   ),

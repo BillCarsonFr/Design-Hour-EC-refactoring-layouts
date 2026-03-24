@@ -1,9 +1,14 @@
 import type { ItemLayoutData } from "./ItemLayoutData.ts";
 
+export type LayoutListener = (
+  layoutData: ItemLayoutData[],
+  contentHeight: number,
+) => void;
+
 export interface TileMetaData {
   /** The unique identifier for this tile, used for tracking and layout purposes. */
   stableId: string;
-  // isHero: boolean;
+  isHero: boolean;
   // isMe: boolean;
   /**
    * A score representing the importance of this tile for layout purposes.
@@ -25,13 +30,19 @@ export interface LayoutConfig {
   spacing: number;
 }
 
+export interface LayoutDataEngine {
+  setListener(listener: LayoutListener): void;
+  updateTileInfo(sortedTiles: TileMetaData[]): void;
+  updateContainerSize(containerWidth: number, containerHeight: number): void;
+}
+
 export const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
   preferredTileWidth: 360,
   preferredRatio: 1.33,
   spacing: 16,
 };
 
-export class LayoutEngine {
+export class LayoutEngine implements LayoutDataEngine {
   private readonly config: LayoutConfig;
 
   private cachedTileLayoutData: Map<string, ItemLayoutData> = new Map();
@@ -56,13 +67,9 @@ export class LayoutEngine {
     this.config = config;
   }
 
-  private _listener:
-    | ((layoutData: ItemLayoutData[], contentHeight: number) => void)
-    | null = null;
+  private _listener: LayoutListener | null = null;
 
-  public setListener(
-    listener: (layoutData: ItemLayoutData[], contentHeight: number) => void,
-  ) {
+  public setListener(listener: LayoutListener) {
     this._listener = listener;
   }
 
@@ -75,7 +82,7 @@ export class LayoutEngine {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  public updateContainerSize(containerWidth: number, containerHeight: number) {
+  public updateContainerSize(containerWidth: number, _containerHeight: number) {
     // Calculate the ideal (fractional) number of tiles that fit in the container
     const idealTilesPerRow =
       (containerWidth + this.config.spacing) /
@@ -108,7 +115,9 @@ export class LayoutEngine {
     }
 
     if (this.tiles.length === 0) {
-      console.debug("No tiles to layout");
+      this.cachedTileLayoutData.clear();
+      this.contentHeight = 0;
+      this._listener?.([], this.contentHeight);
       return;
     }
 
@@ -144,9 +153,13 @@ export class LayoutEngine {
 
     this.contentHeight = y + tileHeight; // Total height of the content, used for scroll container sizing.
 
-    this._listener?.(
-      [...this.cachedTileLayoutData.values()],
-      this.contentHeight,
-    );
+    this._listener?.(this.getLayoutDataInInputOrder(), this.contentHeight);
+  }
+
+  private getLayoutDataInInputOrder(): ItemLayoutData[] {
+    return this.tiles.flatMap((tile) => {
+      const layoutData = this.cachedTileLayoutData.get(tile.stableId);
+      return layoutData ? [layoutData] : [];
+    });
   }
 }

@@ -12,6 +12,37 @@
   min-height: 100%;
 }
 
+.gridScroller {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -ms-overflow-style: none; /* IE/legacy Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+.gridScroller::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+/*.gridScroller:hover,*/
+/*.gridScroller:focus-within {*/
+/*  scrollbar-width: thin;*/
+/*}*/
+
+/*.gridScroller:hover::-webkit-scrollbar,*/
+/*.gridScroller:focus-within::-webkit-scrollbar {*/
+/*  width: 8px;*/
+/*}*/
+
+/*.gridScroller:hover::-webkit-scrollbar-thumb,*/
+/*.gridScroller:focus-within::-webkit-scrollbar-thumb {*/
+/*  background: rgba(0, 0, 0, 0.3);*/
+/*  border-radius: 999px;*/
+/*}*/
+
 .tileWrapper {
   display: flex;
 }

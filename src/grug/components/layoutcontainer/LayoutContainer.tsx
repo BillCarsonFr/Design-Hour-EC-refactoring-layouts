@@ -31,29 +31,35 @@ export function LayoutContainer<TTileProps extends object>({
 
   const [ref, { width, height }] = useMeasure();
 
-  const { childLayoutData, contentHeight } = useLayoutData({
+  const layoutParams: Parameters<typeof useLayoutData>[0] = {
     config,
     tiles: snapshot.tiles,
     width,
     height,
-  });
+    engineKind: snapshot.mode,
+  };
+
+  const { childLayoutData, contentHeight } = useLayoutData(layoutParams);
 
   const enableTransition = width > 0 && height > 0;
+
   return (
     <div ref={ref} className={styles.gridRoot}>
-      <div
-        className={styles.scrollingContent}
-        style={{ height: Math.max(contentHeight, height) }}
-      >
-        {childLayoutData.map((layoutData) => (
-          <div
-            key={layoutData.uniqueId}
-            className={styles.tileWrapper}
-            style={stylesForLayoutData(layoutData, enableTransition)}
-          >
-            <TileComponent {...getTileProps(layoutData.uniqueId)} />
-          </div>
-        ))}
+      <div className={styles.gridScroller}>
+        <div
+          className={styles.scrollingContent}
+          style={{ height: Math.max(contentHeight, height) }}
+        >
+          {childLayoutData.map((layoutData) => (
+            <div
+              key={layoutData.uniqueId}
+              className={styles.tileWrapper}
+              style={stylesForLayoutData(layoutData, enableTransition)}
+            >
+              <TileComponent {...getTileProps(layoutData.uniqueId)} />
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -69,12 +75,15 @@ function stylesForLayoutData(
   enableTransition: boolean,
 ): CSSProperties {
   return {
-    position: "absolute",
+    position: layoutData.sticky == true ? "sticky" : "absolute",
+    top: 0,
+    left: 0,
     // Use transform instead of top/left for better performance when animating position changes,
     // as it can be GPU-accelerated and doesn't trigger layout recalculations.
     transform: `translate3d(${layoutData.x}px, ${layoutData.y}px, 0)`,
     width: layoutData.width,
     height: layoutData.height,
+    zIndex: layoutData.zIndex,
     transition: enableTransition
       ? "transform 300ms ease, width 300ms ease, height 300ms ease"
       : "none",

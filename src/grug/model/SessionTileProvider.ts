@@ -117,6 +117,7 @@ export class SessionTileProvider implements TileProvider {
           if (ev.type === "join") {
             byId.set(ev.participant.id, {
               stableId: ev.participant.id,
+              isHero: false,
               score: 0,
               lastSpokeAt: 0,
               joinOrder: state.nextJoinOrder + ev.joinOrder,
@@ -154,14 +155,17 @@ export class SessionTileProvider implements TileProvider {
               b.lastSpokeAt - a.lastSpokeAt ||
               a.joinOrder - b.joinOrder,
           )
-          .map(({ stableId, score }) => ({ stableId, score })),
+          .map(({ stableId, isHero, score }) => ({ stableId, isHero, score })),
       ),
 
       distinctUntilChanged(
         (a, b) =>
           a.length === b.length &&
           a.every(
-            (x, i) => x.stableId === b[i].stableId && x.score === b[i].score,
+            (x, i) =>
+              x.stableId === b[i].stableId &&
+              x.isHero === b[i].isHero &&
+              x.score === b[i].score,
           ),
       ),
     );

@@ -21,4 +21,10 @@ export interface ItemLayoutData {
    * The width and height of the item in pixels.
    */
   height: number;
+  /**
+   * Optional stacking order. Higher values render on top.
+   */
+  zIndex?: number;
+
+  sticky?: boolean;
 }
