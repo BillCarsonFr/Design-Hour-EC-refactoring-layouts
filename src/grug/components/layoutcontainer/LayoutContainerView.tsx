@@ -14,9 +14,12 @@ import { LayoutEngine } from "./layout/LayoutEngine.ts";
 import { useBehavior } from "../../ec-viewmodel/Behavior.ts";
 import type { ViewModel } from "../../ec-viewmodel/ViewModel.ts";
 
+/** The per tile position related data provided by the ViewModel.
+ * This is very high level metadata. The view itself is resposible to compute the position of the tiles
+ */
 export interface TileLayoutMetaData {
   /** The unique identifier for this tile, used for tracking and layout purposes. */
-  stableId: string;
+  id: string;
   // isHero: boolean;
   // isMe: boolean;
   /**
@@ -33,7 +36,7 @@ export interface LayoutContainerSnapshot {
   // Consider splitting the two into tiles Map<string, JSX.Element> and tileMetadata: TileMetaData[]
   tilesLayoutMetaData: TileLayoutMetaData[];
   tiles: Map<string, JSX.Element>;
-  mode: "grid" | "list";
+  mode: "grid" | "spotlight";
 }
 
 interface LayoutContainerViewProps {
@@ -83,25 +86,25 @@ export function LayoutContainerView({
   }, [layoutEngine, mode]);
 
   const enableTransition = width > 0 && height > 0;
-
+  console.log("tilesPositionData", tilesPositionData);
   return (
     <div ref={ref} className={styles.gridRoot}>
       <div
         className={styles.scrollingContent}
         style={{ height: contentHeight }}
       >
-        {tilesPositionData.map((data) => {
-          const style = stylesForPositionData(data, enableTransition);
-          return (
-            <div
-              key={data.stableId}
-              className={styles.tileWrapper}
-              style={style}
-            >
-              {tiles.get(data.stableId)}
-            </div>
-          );
-        })}
+        {tilesPositionData
+          // We order by stable id to ensure consistent dom tree ordering across renders.
+          // Otherwise items might get repositioned in the dom and css wont work with: `transform 300ms ease`.
+          .sort((a, b) => a.id.localeCompare(b.id))
+          .map((data) => {
+            const style = stylesForPositionData(data, enableTransition);
+            return (
+              <div key={data.id} className={styles.tileWrapper} style={style}>
+                {tiles.get(data.id)}
+              </div>
+            );
+          })}
       </div>
     </div>
   );

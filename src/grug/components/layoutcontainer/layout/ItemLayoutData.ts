@@ -1,5 +1,5 @@
 export interface TilePositionData {
-  stableId: string;
+  id: string;
   /**
    * The x and y coordinates of the top-left corner of the item, relative to the layout container.
    */

@@ -48,9 +48,9 @@ describe("SessionTileProvider", () => {
       const currentState = emissions.pop();
       expect(currentState).toBeDefined();
       expect(currentState?.length).toBe(3);
-      expect(currentState?.[0]?.stableId).toBe("1");
-      expect(currentState?.[1]?.stableId).toBe("2");
-      expect(currentState?.[2]?.stableId).toBe("0");
+      expect(currentState?.[0]?.id).toBe("1");
+      expect(currentState?.[1]?.id).toBe("2");
+      expect(currentState?.[2]?.id).toBe("0");
     });
   });
 
@@ -74,21 +74,21 @@ describe("SessionTileProvider", () => {
 
       flush();
 
-      expect(emissions.pop()?.[0]?.stableId).toBe(carl.id);
+      expect(emissions.pop()?.[0]?.id).toBe(carl.id);
 
       // bob starts speaking
       bob.isSpeaking$.next(true);
       carl.isSpeaking$.next(false);
 
       flush();
-      expect(emissions.pop()?.[0]?.stableId).toBe(bob.id);
+      expect(emissions.pop()?.[0]?.id).toBe(bob.id);
 
       // Alice starts speaking
       alice.isSpeaking$.next(true);
       bob.isSpeaking$.next(false);
 
       flush();
-      expect(emissions.pop()?.[0]?.stableId).toBe(alice.id);
+      expect(emissions.pop()?.[0]?.id).toBe(alice.id);
     });
   });
 });

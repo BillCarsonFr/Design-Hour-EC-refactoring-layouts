@@ -31,6 +31,11 @@ export class LayoutEngine {
   private tileSize: [number, number] | undefined = undefined;
   private colNumber: number | undefined = undefined;
 
+  private containerHeight: number | undefined = undefined;
+  private containerWidth: number | undefined = undefined;
+
+  private mode: "spotlight" | "grid" = "grid";
+
   /**
    * The list of tiles to be laid out, along with their metadata.
    * Ordered by their score, with the most important tiles first.
@@ -65,8 +70,9 @@ export class LayoutEngine {
     this.computeLayout();
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  public updateContainerSize(containerWidth: number, _containerHeight: number) {
+  public updateContainerSize(containerWidth: number, containerHeight: number) {
+    console.log("updateContainerSize", containerWidth, containerHeight);
+
     // Calculate the ideal (fractional) number of tiles that fit in the container
     const idealTilesPerRow =
       (containerWidth + this.config.spacing) /
@@ -87,21 +93,29 @@ export class LayoutEngine {
     const tileHeight = tileWidth / this.config.preferredRatio;
     this.tileSize = [tileWidth, tileHeight];
     this.colNumber = tilesPerRow;
+    this.containerHeight = containerHeight;
+    this.containerWidth = containerWidth;
 
     // TODO: compute only if changes?
     this.computeLayout();
   }
 
-  public updateMode(mode: "list" | "grid") {
+  public updateMode(mode: "spotlight" | "grid") {
     console.log("mode updated", mode);
-
+    this.mode = mode;
     // TODO: compute only if changes?
     this.computeLayout();
   }
 
   private computeLayout() {
-    if (!this.tileSize || !this.colNumber) {
-      console.debug("Container size not set yet, cannot compute layout");
+    console.log("computeLayout");
+    if (
+      !this.tileSize ||
+      !this.colNumber ||
+      !this.containerWidth ||
+      !this.containerHeight
+    ) {
+      console.log("Container size not yet set, cannot compute layout");
       return;
     }
 
@@ -110,37 +124,61 @@ export class LayoutEngine {
       return;
     }
 
-    // const layout = [];
-    this.cachedTileLayoutData = [];
-    let x = 0;
-    let y = 0;
-
-    const tileWidth = this.tileSize[0];
-    const tileHeight = this.tileSize[1];
-    // let rowHeight = tileHeight + this.config.spacing;
-    let colNumber = 0;
-    // let rowNumber = 0;
-    for (const tile of this.tiles) {
-      if (colNumber >= this.colNumber) {
-        // Move to the next row
-        x = 0;
-        y += tileHeight + this.config.spacing;
-        colNumber = 0;
-      }
+    console.debug("computeLayout mode", this.mode);
+    if (this.mode === "spotlight") {
+      this.cachedTileLayoutData = [];
+      const spotlight = this.tiles[0].id;
 
       this.cachedTileLayoutData.push({
-        stableId: tile.stableId,
-        x,
-        y,
-        width: tileWidth,
-        height: tileHeight,
+        id: spotlight,
+        x: this.config.spacing,
+        y: this.config.spacing,
+        width: this.containerWidth - 4 * this.config.spacing - 400,
+        height: this.containerHeight - 2 * this.config.spacing,
       });
+      for (let i = 2; i < this.tiles.length; i++) {
+        this.cachedTileLayoutData.push({
+          id: this.tiles[i].id,
+          x: this.containerWidth - 400 - this.config.spacing,
+          y: this.config.spacing + (i - 2) * (300 + this.config.spacing),
+          width: 400,
+          height: 300,
+        });
+      }
 
-      x += tileWidth + this.config.spacing;
-      colNumber++;
+      this.contentHeight = this.containerHeight;
+    } else if (this.mode === "grid") {
+      this.cachedTileLayoutData = [];
+      let x = 0;
+      let y = 0;
+
+      const tileWidth = this.tileSize[0];
+      const tileHeight = this.tileSize[1];
+      // let rowHeight = tileHeight + this.config.spacing;
+      let colNumber = 0;
+      // let rowNumber = 0;
+      for (const tile of this.tiles) {
+        if (colNumber >= this.colNumber) {
+          // Move to the next row
+          x = 0;
+          y += tileHeight + this.config.spacing;
+          colNumber = 0;
+        }
+
+        this.cachedTileLayoutData.push({
+          id: tile.id,
+          x,
+          y,
+          width: tileWidth,
+          height: tileHeight,
+        });
+
+        x += tileWidth + this.config.spacing;
+        colNumber++;
+      }
+
+      this.contentHeight = y + tileHeight; // Total height of the content, used for scroll container sizing.
     }
-
-    this.contentHeight = y + tileHeight; // Total height of the content, used for scroll container sizing.
 
     this._listener?.(this.cachedTileLayoutData, this.contentHeight);
   }

@@ -14,7 +14,8 @@ type LayoutContainerStoryArgs = {
    * The number of tiles to show in the LayoutContainer
    */
   numberOfTiles: number;
-  mode: "grid" | "list";
+  mode: "grid" | "spotlight";
+  containerHeight: string;
 };
 
 interface TestTileSnapshot {
@@ -51,10 +52,10 @@ function TestTile({ tileId, onClick }: TestTileSnapshot) {
 
 class MockViewModel implements ViewModel<
   LayoutContainerSnapshot,
-  { setNumberOfTiles: (amount: number) => void }
+  { setNumberOfTiles: (amount: number, mode: "grid" | "spotlight") => void }
 > {
   public constructor(args: LayoutContainerStoryArgs) {
-    this.setNumberOfTiles(args.numberOfTiles);
+    this.setNumberOfTiles(args.numberOfTiles, args.mode);
   }
 
   public snapshot$ = new BehaviorSubject<LayoutContainerSnapshot>({
@@ -63,7 +64,7 @@ class MockViewModel implements ViewModel<
     mode: "grid",
   });
 
-  public setNumberOfTiles(amount: number): void {
+  public setNumberOfTiles(amount: number, mode: "grid" | "spotlight"): void {
     const tiles = new Map();
     const tilesLayoutMetaData: TileLayoutMetaData[] = [];
 
@@ -76,19 +77,19 @@ class MockViewModel implements ViewModel<
           tileId={id}
           onClick={() => {
             const score = this.snapshot$.value.tilesLayoutMetaData.find(
-              (t) => t.stableId === id,
+              (t) => t.id === id,
             )?.score;
             this.setScoreOfTile(id, (score ?? 0) + 1);
           }}
         />,
       );
-      tilesLayoutMetaData.push({ stableId: id, score: 0 });
+      tilesLayoutMetaData.push({ id: id, score: 0 });
     });
 
     this.snapshot$.next({
       tilesLayoutMetaData,
       tiles,
-      mode: "grid",
+      mode,
     });
   }
 
@@ -103,14 +104,14 @@ class MockViewModel implements ViewModel<
         tileId={newTileId}
         onClick={() => {
           const score = snapshot.tilesLayoutMetaData.find(
-            (t) => t.stableId === newTileId,
+            (t) => t.id === newTileId,
           )?.score;
           this.setScoreOfTile(newTileId, (score ?? 0) + 1);
         }}
       />,
     );
 
-    snapshot.tilesLayoutMetaData.push({ stableId: newTileId, score: 0 });
+    snapshot.tilesLayoutMetaData.push({ id: newTileId, score: 0 });
 
     this.snapshot$.next({
       ...snapshot,
@@ -121,9 +122,7 @@ class MockViewModel implements ViewModel<
 
   public setScoreOfTile(tileId: string, score: number): void {
     const snapshot = this.snapshot$.value;
-    const tileMeta = snapshot.tilesLayoutMetaData.find(
-      (t) => t.stableId === tileId,
-    );
+    const tileMeta = snapshot.tilesLayoutMetaData.find((t) => t.id === tileId);
     if (tileMeta) {
       tileMeta.score = score;
       this.snapshot$.next({
@@ -140,18 +139,18 @@ const meta = {
   render: (args: LayoutContainerStoryArgs) => {
     const vm = new MockViewModel(args);
     return (
-      <>
+      <div style={{ height: args.containerHeight }}>
         <div
           data-testid="add"
           onClick={() => vm.addTile()}
           style={{ width: 0, height: 0 }}
         />
         <LayoutContainerView vm={vm} />
-      </>
+      </div>
     );
   },
   argTypes: {
-    mode: { options: ["grid", "list"], control: { type: "inline-radio" } },
+    mode: { options: ["grid", "spotlight"], control: { type: "inline-radio" } },
   },
 } satisfies Meta<LayoutContainerStoryArgs>;
 
@@ -162,6 +161,15 @@ export const Default: Story = {
   args: {
     numberOfTiles: 4,
     mode: "grid",
+    containerHeight: "700px",
+  },
+};
+
+export const Spotlight: Story = {
+  args: {
+    numberOfTiles: 2,
+    mode: "spotlight",
+    containerHeight: "600px",
   },
 };
 
@@ -169,6 +177,7 @@ export const SpeakerMovesUp: Story = {
   args: {
     numberOfTiles: 2,
     mode: "grid",
+    containerHeight: "800px",
   },
   play: async (inputs) => {
     const { userEvent } = inputs;
