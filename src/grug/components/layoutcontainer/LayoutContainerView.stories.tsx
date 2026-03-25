@@ -1,4 +1,4 @@
-import { useMemo, type CSSProperties } from "react";
+import { useEffect, useMemo, type CSSProperties } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import {
   LayoutContainerView,
@@ -6,9 +6,8 @@ import {
 } from "./LayoutContainerView.tsx";
 import { BehaviorSubject } from "rxjs";
 import type { ViewModel } from "../../ec-viewmodel/ViewModel.ts";
-import { screen } from "storybook/test";
+import { expect, within } from "storybook/test";
 import type { TileLayoutMetaData } from "./TileDataInterfaces.ts";
-import { useEffect } from "storybook/internal/preview-api";
 
 type LayoutContainerStoryArgs = {
   /**
@@ -100,8 +99,8 @@ class MockViewModel implements ViewModel<
 
     const prevTiles = Array.from(this.tiles);
     this.tiles = Array.from({ length: amount }, (_, i) => ({
-      id: `tile-${i}`,
-      score: prevTiles.find((t) => t.id === `tile-${i}`)?.score ?? 0,
+      id: `tile ${i}`,
+      score: prevTiles.find((t) => t.id === `tile ${i}`)?.score ?? 0,
     }));
     this.updateSnapshot();
   }
@@ -110,7 +109,7 @@ class MockViewModel implements ViewModel<
     this.updateSnapshot();
   }
   public addTile(): void {
-    this.tiles.push({ id: `tile-${this.tiles.length}`, score: 0 });
+    this.tiles.push({ id: `tile ${this.tiles.length}`, score: 0 });
     this.updateSnapshot();
   }
   public setScoreOfTile(tileId: string, score: number): void {
@@ -123,7 +122,6 @@ const meta = {
   title: "Grug/Container/LayoutContainer",
   render: (args: LayoutContainerStoryArgs) => {
     const vm = useMemo(() => new MockViewModel(), []);
-
     useEffect(() => {
       vm.setNumberOfTiles(args.numberOfTiles);
       vm.setMode(args.mode);
@@ -134,6 +132,15 @@ const meta = {
         <div
           data-testid="add"
           onClick={() => vm.addTile()}
+          style={{ width: 0, height: 0 }}
+        />
+        <div
+          data-testid="modeToggle"
+          onClick={() =>
+            vm.setMode(
+              vm.snapshot$.value.mode === "grid" ? "spotlight" : "grid",
+            )
+          }
           style={{ width: 0, height: 0 }}
         />
         <LayoutContainerView vm={vm} />
@@ -167,44 +174,46 @@ export const SpeakerMovesUp: Story = {
     numberOfTiles: 2,
     mode: "grid",
   },
-  play: async (inputs) => {
-    const { userEvent } = inputs;
-    await sleep(800);
-    await userEvent.click(screen.getByText("tile-1"));
+  play: async ({ canvasElement, userEvent }) => {
+    const canvas = within(canvasElement);
+
+    expect(await canvas.findByText("tile 1")).toBeInTheDocument();
+    await userEvent.click(await canvas.findByText("tile 1"));
+    await userEvent.click(canvas.getByTestId("add"));
     await sleep(100);
-    await userEvent.click(screen.getByTestId("add"));
+    await userEvent.click(canvas.getByTestId("add"));
     await sleep(100);
-    await userEvent.click(screen.getByTestId("add"));
+    await userEvent.click(canvas.getByTestId("add"));
     await sleep(100);
-    await userEvent.click(screen.getByTestId("add"));
+    await userEvent.click(canvas.getByTestId("add"));
     await sleep(100);
-    await userEvent.click(screen.getByTestId("add"));
+    await userEvent.click(canvas.getByTestId("add"));
     await sleep(100);
-    await userEvent.click(screen.getByTestId("add"));
-    await sleep(100);
-    await userEvent.click(screen.getByTestId("add"));
+    await userEvent.click(canvas.getByTestId("add"));
     await sleep(300);
-    await userEvent.click(screen.getByText("tile-3"));
+    await userEvent.click(canvas.getByText("tile 3"));
     await sleep(300);
-    await userEvent.click(screen.getByText("tile-2"));
+    await userEvent.click(canvas.getByText("tile 2"));
+    await userEvent.click(canvas.getByTestId("modeToggle"));
     await sleep(300);
-    await userEvent.click(screen.getByText("tile-1"));
+    await userEvent.click(canvas.getByText("tile 1"));
     await sleep(300);
-    await userEvent.click(screen.getByText("tile-0"));
+    await userEvent.click(canvas.getByText("tile 0"));
     await sleep(300);
-    await userEvent.click(screen.getByText("tile-2"));
+    await userEvent.click(canvas.getByText("tile 2"));
+    await userEvent.click(canvas.getByTestId("modeToggle"));
     await sleep(300);
-    await userEvent.click(screen.getByText("tile-1"));
+    await userEvent.click(canvas.getByText("tile 1"));
     await sleep(300);
-    await userEvent.click(screen.getByText("tile-0"));
+    await userEvent.click(canvas.getByText("tile 0"));
     await sleep(300);
-    await userEvent.click(screen.getByText("tile-7"));
+    await userEvent.click(canvas.getByText("tile 7"));
     await sleep(300);
-    await userEvent.click(screen.getByText("tile-7"));
+    await userEvent.click(canvas.getByText("tile 7"));
     await sleep(300);
-    await userEvent.click(screen.getByText("tile-7"));
+    await userEvent.click(canvas.getByText("tile 7"));
     await sleep(300);
-    await userEvent.click(screen.getByText("tile-7"));
+    await userEvent.click(canvas.getByText("tile 7"));
   },
 };
 
