@@ -20,8 +20,10 @@ export interface TilePositionData {
   fixed: boolean;
 }
 
-/** The per tile position related data provided by the ViewModel.
- * This is very high level metadata. The view itself is resposible to compute the position of the tiles
+/**
+ * The per tile position related data provided by the ViewModel.
+ * This is very high level metadata. The view itself is resposible to compute the position of the tiles.
+ * The order of the metadata array determines their score/priority.
  */
 export interface TileLayoutMetaData {
   /** The unique identifier for this tile, used for tracking and layout purposes. */
@@ -29,12 +31,4 @@ export interface TileLayoutMetaData {
   // isHero: boolean;
   // isMe: boolean;
   // isScreenshare: boolean;
-  /**
-   * A score representing the importance of this tile for layout purposes.
-   * Higher scores indicate higher importance.
-   * For a call it would be based on factors like whether the tile is active/speaking,
-   * whether the tile is has video enabled ot not...
-   */
-  // TODO make score implicit by TileMetaData array order
-  score: number;
 }

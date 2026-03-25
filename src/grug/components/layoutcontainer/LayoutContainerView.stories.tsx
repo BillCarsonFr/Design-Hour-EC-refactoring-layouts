@@ -18,12 +18,12 @@ type LayoutContainerStoryArgs = {
   mode: "grid" | "spotlight";
 };
 
-interface TestTileSnapshot {
+interface TestTileProps {
   tileId: string;
   onClick: () => void;
 }
 
-function TestTile({ tileId, onClick }: TestTileSnapshot) {
+function TestTile({ tileId, onClick }: TestTileProps) {
   const style: CSSProperties = {
     flex: 1,
     backgroundColor: colorFromId(tileId),
@@ -58,86 +58,64 @@ class MockViewModel implements ViewModel<
 > {
   public constructor() {}
 
+  private tiles: { score: number; id: string }[] = [];
+  private mode: "grid" | "spotlight" = "grid";
   public snapshot$ = new BehaviorSubject<LayoutContainerSnapshot>({
     tilesLayoutMetaData: [],
     tiles: new Map(),
     mode: "grid",
   });
 
-  public setNumberOfTiles(amount: number, mode: "grid" | "spotlight"): void {
-    console.log("set number of tiles", amount, mode);
+  private updateSnapshot(): void {
     const newTiles = new Map();
     const newTilesLayoutMetaData: TileLayoutMetaData[] = [];
 
-    for (let i = 0; i < amount; i++) {
-      const { tiles, tilesLayoutMetaData } = this.snapshot$.value;
-      const id = `tile-${i}`;
-      const newOrOldTile = tiles.get(id) ?? (
+    const sortedTiles = this.tiles.sort((a, b) => b.score - a.score);
+    for (let i = 0; i < sortedTiles.length; i++) {
+      const id = sortedTiles[i]?.id;
+      const newOrOldTile = this.snapshot$.value.tiles.get(id) ?? (
         <TestTile
           tileId={id}
           onClick={() => {
-            const score = tilesLayoutMetaData.find((t) => t.id === id)?.score;
+            const score = this.tiles.find((t) => t.id === id)?.score;
             this.setScoreOfTile(id, (score ?? 0) + 1);
           }}
         />
       );
-      const newOrOldLayoutMetadata = tilesLayoutMetaData.find(
-        (t) => t.id === id,
-      ) ?? {
-        id: id,
-        score: 0,
-      };
       newTiles.set(id, newOrOldTile);
-      newTilesLayoutMetaData.push(newOrOldLayoutMetadata);
+      newTilesLayoutMetaData.push({ id });
     }
 
     const newSnapshot = {
       tilesLayoutMetaData: newTilesLayoutMetaData,
       tiles: newTiles,
-      mode,
+      mode: this.mode,
     };
-    console.log("update snapshot via setNumberOfTiles", newSnapshot);
+    console.log("update snapshot", newSnapshot);
     this.snapshot$.next(newSnapshot);
   }
 
-  public addTile(): void {
-    const snapshot = this.snapshot$.value;
-    const newTileId = `tile-${snapshot.tilesLayoutMetaData.length}`;
+  public setNumberOfTiles(amount: number): void {
+    console.log("set number of tiles", amount);
 
-    snapshot.tiles.set(
-      newTileId,
-      <TestTile
-        key={newTileId}
-        tileId={newTileId}
-        onClick={() => {
-          const score = snapshot.tilesLayoutMetaData.find(
-            (t) => t.id === newTileId,
-          )?.score;
-          this.setScoreOfTile(newTileId, (score ?? 0) + 1);
-        }}
-      />,
-    );
-
-    snapshot.tilesLayoutMetaData.push({ id: newTileId, score: 0 });
-
-    this.snapshot$.next({
-      ...snapshot,
-      // duplicate array to trigger react
-      tilesLayoutMetaData: Array.from(snapshot.tilesLayoutMetaData),
-    });
+    const prevTiles = Array.from(this.tiles);
+    this.tiles = Array.from({ length: amount }, (_, i) => ({
+      id: `tile-${i}`,
+      score: prevTiles.find((t) => t.id === `tile-${i}`)?.score ?? 0,
+    }));
+    this.updateSnapshot();
   }
-
+  public setMode(mode: "grid" | "spotlight"): void {
+    this.mode = mode;
+    this.updateSnapshot();
+  }
+  public addTile(): void {
+    this.tiles.push({ id: `tile-${this.tiles.length}`, score: 0 });
+    this.updateSnapshot();
+  }
   public setScoreOfTile(tileId: string, score: number): void {
-    const snapshot = this.snapshot$.value;
-    const tileMeta = snapshot.tilesLayoutMetaData.find((t) => t.id === tileId);
-    if (tileMeta) {
-      tileMeta.score = score;
-      this.snapshot$.next({
-        ...snapshot,
-        // Duplicate Array to trigger react
-        tilesLayoutMetaData: Array.from(snapshot.tilesLayoutMetaData),
-      });
-    }
+    this.tiles.find((t) => t.id === tileId)!.score = score;
+    this.updateSnapshot();
   }
 }
 
@@ -147,7 +125,8 @@ const meta = {
     const vm = useMemo(() => new MockViewModel(), []);
 
     useEffect(() => {
-      vm.setNumberOfTiles(args.numberOfTiles, args.mode);
+      vm.setNumberOfTiles(args.numberOfTiles);
+      vm.setMode(args.mode);
     }, [args, vm]);
 
     return (

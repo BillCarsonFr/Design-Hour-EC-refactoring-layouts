@@ -84,8 +84,6 @@ export function LayoutEngine$(
         return;
       }
 
-      tilesLayoutMetaData.sort((a, b) => b.score - a.score);
-
       if (tilesLayoutMetaData.length === 0) {
         console.debug("No tiles to layout");
         return;

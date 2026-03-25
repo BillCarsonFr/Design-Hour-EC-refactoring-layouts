@@ -61,11 +61,7 @@ export class LayoutEngine {
   }
 
   public updateTileInfo(tiles: TileLayoutMetaData[]) {
-    // TODO make score implicit
-    const unsortedTiles = [...tiles];
-    const sortedTiles = unsortedTiles.sort((a, b) => b.score - a.score);
-
-    this.tiles = sortedTiles;
+    this.tiles = tiles;
     // TODO: re-compute only if really needed.
     // For example, if the order of tiles changes we can just swap their layout data in the cachedTileLayoutData mapping without re-computing the whole layout.
     // In case or removing/adding tiles as there are no width/height changes, we might be able to keep the same layout and just update the stableId->layoutData mapping for new/removed tiles.
