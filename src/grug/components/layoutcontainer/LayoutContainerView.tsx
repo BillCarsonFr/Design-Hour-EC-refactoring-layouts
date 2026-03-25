@@ -54,7 +54,6 @@ export function LayoutContainerView({
       ),
     [width, height],
   );
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const layoutDataManual = useObservableState(
     useObservable(() => LayoutEngine$(snapshot$, containerSize$)),
   );
@@ -62,12 +61,16 @@ export function LayoutContainerView({
   /* DOM mode */
   const [layoutDataDom, setLayoutDataDom] = useState<LayoutData>();
 
+  /* FINAL data based on what mode is used */
+  const domBased = ["grid"];
+  const layoutData = domBased.includes(mode) ? layoutDataDom : layoutDataManual;
+
   return (
     <div ref={ref} className={styles.gridRoot}>
       <div
         className={styles.scrollingContent}
         // transform to create a fixed position containing box
-        style={{ height: layoutDataDom?.contentHeight }}
+        style={{ height: layoutData?.contentHeight }}
       >
         {/* DOM mode */}
         {mode === "grid" && (
@@ -76,12 +79,12 @@ export function LayoutContainerView({
             tilesLayoutMetaData={tilesLayoutMetaData ?? []}
           />
         )}
-        {mode === "spotlight" && <div>Not yet implemented</div>}
+        {mode === "spotlight" && <></> /* This is done via manual mode */}
 
         {/* MANUAL mode does need nothing here */}
 
-        {/* BOTH - switch from layoutDataDom to layoutDataManual is the only change needed */}
-        {layoutDataDom?.tilesPositionData
+        {/* use whatever computation system is available for the current mode */}
+        {layoutData?.tilesPositionData
           // We order by stable id to ensure consistent dom tree ordering across renders.
           // Otherwise items might get repositioned in the dom and css wont work with: `transform 300ms ease`.
           .sort((a, b) => a.id.localeCompare(b.id))
