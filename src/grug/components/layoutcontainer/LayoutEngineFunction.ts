@@ -71,10 +71,6 @@ export function LayoutEngine$(
     distinctUntilChanged((a, b) => JSON.stringify(a) == JSON.stringify(b)),
   );
 
-  snapshotData$.subscribe((snapshot) =>
-    console.log("snapshot subscription", snapshot),
-  );
-
   combineLatest([snapshotData$, containerDerivedData$]).subscribe(
     ([{ tilesLayoutMetaData, mode }, container]) => {
       console.log("computeLayout");

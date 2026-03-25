@@ -8,6 +8,7 @@ import { BehaviorSubject } from "rxjs";
 import type { ViewModel } from "../../ec-viewmodel/ViewModel.ts";
 import { screen } from "storybook/test";
 import type { TileLayoutMetaData } from "./TileDataInterfaces.ts";
+import { useEffect } from "storybook/internal/preview-api";
 
 type LayoutContainerStoryArgs = {
   /**
@@ -33,7 +34,7 @@ function TestTile({ tileId, onClick }: TestTileSnapshot) {
   };
 
   return (
-    <div style={style}>
+    <div style={style} key={tileId}>
       <p
         onClick={onClick}
         style={{
@@ -55,9 +56,7 @@ class MockViewModel implements ViewModel<
   LayoutContainerSnapshot,
   { setNumberOfTiles: (amount: number, mode: "grid" | "spotlight") => void }
 > {
-  public constructor(args: LayoutContainerStoryArgs) {
-    this.setNumberOfTiles(args.numberOfTiles, args.mode);
-  }
+  public constructor() {}
 
   public snapshot$ = new BehaviorSubject<LayoutContainerSnapshot>({
     tilesLayoutMetaData: [],
@@ -66,30 +65,35 @@ class MockViewModel implements ViewModel<
   });
 
   public setNumberOfTiles(amount: number, mode: "grid" | "spotlight"): void {
-    const tiles = new Map();
+    console.log("set number of tiles", amount, mode);
+    const newTiles = new Map();
     const newTilesLayoutMetaData: TileLayoutMetaData[] = [];
 
-    const tileIds = [...Array(amount).keys()].map((i) => `tile-${i}`);
-    tileIds.forEach((id) => {
-      tiles.set(
-        id,
+    for (let i = 0; i < amount; i++) {
+      const { tiles, tilesLayoutMetaData } = this.snapshot$.value;
+      const id = `tile-${i}`;
+      const newOrOldTile = tiles.get(id) ?? (
         <TestTile
-          key={id}
           tileId={id}
           onClick={() => {
-            const score = this.snapshot$.value.tilesLayoutMetaData.find(
-              (t) => t.id === id,
-            )?.score;
+            const score = tilesLayoutMetaData.find((t) => t.id === id)?.score;
             this.setScoreOfTile(id, (score ?? 0) + 1);
           }}
-        />,
+        />
       );
-      newTilesLayoutMetaData.push({ id: id, score: 0 });
-    });
+      const newOrOldLayoutMetadata = tilesLayoutMetaData.find(
+        (t) => t.id === id,
+      ) ?? {
+        id: id,
+        score: 0,
+      };
+      newTiles.set(id, newOrOldTile);
+      newTilesLayoutMetaData.push(newOrOldLayoutMetadata);
+    }
 
     const newSnapshot = {
       tilesLayoutMetaData: newTilesLayoutMetaData,
-      tiles,
+      tiles: newTiles,
       mode,
     };
     console.log("update snapshot via setNumberOfTiles", newSnapshot);
@@ -140,7 +144,11 @@ class MockViewModel implements ViewModel<
 const meta = {
   title: "Grug/Container/LayoutContainer",
   render: (args: LayoutContainerStoryArgs) => {
-    const vm = useMemo(() => new MockViewModel(args), [args]);
+    const vm = useMemo(() => new MockViewModel(), []);
+
+    useEffect(() => {
+      vm.setNumberOfTiles(args.numberOfTiles, args.mode);
+    }, [args, vm]);
 
     return (
       <div style={{ height: "100%" }}>
