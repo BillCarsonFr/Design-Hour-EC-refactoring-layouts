@@ -9,6 +9,7 @@ import type {
   TileLayoutMetaData,
   TilePositionData,
 } from "./TileDataInterfaces.ts";
+import type { LayoutData } from "./LayoutContainerView.tsx";
 
 export interface LayoutConfig {
   // This is the preferred width for tiles in the layout.
@@ -34,7 +35,7 @@ export function LayoutEngine$(
   }>,
   containerData$: Observable<{ w: number; h: number }>,
   config: LayoutConfig = DEFAULT_LAYOUT_CONFIG,
-) {
+): Observable<LayoutData> {
   const tilesPositionData$ = new BehaviorSubject<TilePositionData[]>([]);
   const contentHeight$ = new BehaviorSubject<number>(0);
 

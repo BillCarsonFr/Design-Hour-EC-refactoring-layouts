@@ -1,4 +1,4 @@
-import { type CSSProperties, type JSX } from "react";
+import { useState, type CSSProperties, type JSX } from "react";
 import styles from "./LayoutContainerView.module.css";
 import useMeasure from "react-use-measure";
 
@@ -11,6 +11,14 @@ import type {
 import { useObservable, useObservableState } from "observable-hooks";
 import { map, startWith } from "rxjs";
 import { LayoutEngine$ } from "./LayoutEngineFunction.ts";
+import { GridDomLayout } from "./domLayout/GridDomLayout.tsx";
+
+export type LayoutData = {
+  tilesPositionData: TilePositionData[];
+  // Height is not needed for DOM based layouts since they will be part of the DOM (without transform)
+  // the parent will automatically resize to fit the content.
+  contentHeight?: number;
+};
 
 export interface LayoutContainerSnapshot {
   tilesLayoutMetaData: TileLayoutMetaData[];
@@ -26,11 +34,18 @@ interface LayoutContainerViewProps {
 export function LayoutContainerView({
   vm,
 }: LayoutContainerViewProps): JSX.Element {
+  /* BOTH */
   const snapshot$ = useSnapshot(vm);
-  const tiles = useObservableState(snapshot$.pipe(map((s) => s.tiles)));
+  const { tiles, mode, tilesLayoutMetaData } = useObservableState(snapshot$, {
+    tiles: new Map(),
+    mode: "grid",
+    tilesLayoutMetaData: [],
+  });
 
   const [ref, { width, height }] = useMeasure();
   const enableTransition = width > 0 && height > 0;
+
+  /* MANUAL mode */
   const containerSize$ = useObservable(
     (inputs$) =>
       inputs$.pipe(
@@ -39,30 +54,34 @@ export function LayoutContainerView({
       ),
     [width, height],
   );
-
-  const layoutData = useObservableState(
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const layoutDataManual = useObservableState(
     useObservable(() => LayoutEngine$(snapshot$, containerSize$)),
   );
+
+  /* DOM mode */
+  const [layoutDataDom, setLayoutDataDom] = useState<LayoutData>();
 
   return (
     <div ref={ref} className={styles.gridRoot}>
       <div
         className={styles.scrollingContent}
         // transform to create a fixed position containing box
-        style={{ height: layoutData?.contentHeight }}
+        style={{ height: layoutDataDom?.contentHeight }}
       >
-        {/* Alternative
+        {/* DOM mode */}
+        {mode === "grid" && (
+          <GridDomLayout
+            onLayoutChange={setLayoutDataDom}
+            tilesLayoutMetaData={tilesLayoutMetaData ?? []}
+          />
+        )}
+        {mode === "spotlight" && <div>Not yet implemented</div>}
 
-         {layoutReactElementTree}
-         tiles.values().map((tile) => {
-           return <ReactSpringSlot itToAttachTo={data.id} refToLayoutTree={layoutTreeRef} key={data.id} >
-             {tiles.get(data.id)}
-           </ReactSpringSlot>
-         })
+        {/* MANUAL mode does need nothing here */}
 
-          */}
-
-        {layoutData?.tilesPositionData
+        {/* BOTH - switch from layoutDataDom to layoutDataManual is the only change needed */}
+        {layoutDataDom?.tilesPositionData
           // We order by stable id to ensure consistent dom tree ordering across renders.
           // Otherwise items might get repositioned in the dom and css wont work with: `transform 300ms ease`.
           .sort((a, b) => a.id.localeCompare(b.id))
