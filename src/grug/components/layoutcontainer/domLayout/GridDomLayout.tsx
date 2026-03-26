@@ -28,15 +28,13 @@ export function GridDomLayout({
         padding: "10px",
       }}
     >
-      {tilesLayoutMetaData
-        .sort((a, b) => b.score - a.score)
-        .map((metaData) => (
-          <div
-            key={metaData.id}
-            id={metaData.id}
-            style={{ aspectRatio: 4 / 3 }}
-          ></div>
-        ))}
+      {tilesLayoutMetaData.map((metaData) => (
+        <div
+          key={metaData.id}
+          id={metaData.id}
+          style={{ aspectRatio: 4 / 3 }}
+        ></div>
+      ))}
     </div>
   );
 }
